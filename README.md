@@ -1,16 +1,16 @@
 # skillerim
 
-Kendi Claude Code skill ve subagent'larımın deposu.
+A repository of my own Claude Code skills and subagents.
 
-## İçerik
+## Contents
 
-| Yol | Ne işe yarar |
+| Path | What it does |
 |---|---|
-| [`skills/bilim-klasoredit/`](skills/bilim-klasoredit/) | Bir "Bilim ..." proje klasörünü 6 üst kategoriye (Introduction, Materyal-Method, Result, Discussion-Conclusion, proje-özgü 5. kategori, Diğer) indirgeyen skill. |
-| [`agents/bilim-s-pdf.md`](agents/bilim-s-pdf.md) | Makale PDF'lerini Vancouver-tarzı bir kalıba (`YYYY Soyad. Dergi Adı. Başlık.pdf`) göre yeniden adlandıran subagent — `bilim-klasoredit` tarafından çağrılır. |
-| [`skills/istatistik-profesoru/`](skills/istatistik-profesoru/) | Paylaşılan bir veri seti üzerinde istatistiksel analiz yapıp iki rapor üreten skill: uzman-yorum raporu + Python teknik kod raporu. (Not: yerel kopyada bulunan `assets/` altındaki 16 ders materyali PDF'i telif nedeniyle bu repoya dahil edilmedi.) |
-| [`third-party/caveman/`](third-party/caveman/) | **Kendi yazımım değil** — aktif kullandığım [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) plugin'inin (MIT lisans) kişisel arşiv kopyası. Detay: [`VENDORED.md`](third-party/caveman/VENDORED.md). |
+| [`skills/bilim-klasoredit/`](skills/bilim-klasoredit/) | A skill that reduces a "Bilim ..." project folder to 6 top categories (the literal folder names: Introduction, Materyal-Method, Result, Discussion-Conclusion, the project-specific 5th category, Diğer). |
+| [`agents/bilim-s-pdf.md`](agents/bilim-s-pdf.md) | A subagent that renames article PDFs to a Vancouver-style pattern (`YYYY LastName. Journal Name. Title.pdf`) — called by `bilim-klasoredit`. |
+| [`skills/istatistik-profesoru/`](skills/istatistik-profesoru/) | A skill that performs statistical analysis on a shared dataset and produces two reports: an expert-commentary report + a Python technical code report. (Note: the 16 lecture-material PDFs under `assets/` present in the local copy were not included in this repo for copyright reasons.) |
+| [`third-party/caveman/`](third-party/caveman/) | **Not written by me** — a personal archive copy of the [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) plugin (MIT license) that I actively use. Detail: [`VENDORED.md`](third-party/caveman/VENDORED.md). |
 
-## Kurulum
+## Installation
 
-Bir dosyayı kullanmak için ilgili `.md` dosyasını kendi `~/.claude/skills/` veya `~/.claude/agents/` klasörüne kopyala.
+To use a file, copy the relevant `.md` file into your own `~/.claude/skills/` or `~/.claude/agents/` folder.
