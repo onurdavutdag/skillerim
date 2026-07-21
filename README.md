@@ -9,6 +9,7 @@ Kendi Claude Code skill ve subagent'larımın deposu.
 | [`skills/bilim-klasoredit/`](skills/bilim-klasoredit/) | Bir "Bilim ..." proje klasörünü 6 üst kategoriye (Introduction, Materyal-Method, Result, Discussion-Conclusion, proje-özgü 5. kategori, Diğer) indirgeyen skill. |
 | [`agents/bilim-s-pdf.md`](agents/bilim-s-pdf.md) | Makale PDF'lerini Vancouver-tarzı bir kalıba (`YYYY Soyad. Dergi Adı. Başlık.pdf`) göre yeniden adlandıran subagent — `bilim-klasoredit` tarafından çağrılır. |
 | [`skills/istatistik-profesoru/`](skills/istatistik-profesoru/) | Paylaşılan bir veri seti üzerinde istatistiksel analiz yapıp iki rapor üreten skill: uzman-yorum raporu + Python teknik kod raporu. (Not: yerel kopyada bulunan `assets/` altındaki 16 ders materyali PDF'i telif nedeniyle bu repoya dahil edilmedi.) |
+| [`third-party/caveman/`](third-party/caveman/) | **Kendi yazımım değil** — aktif kullandığım [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) plugin'inin (MIT lisans) kişisel arşiv kopyası. Detay: [`VENDORED.md`](third-party/caveman/VENDORED.md). |
 
 ## Kurulum
 
