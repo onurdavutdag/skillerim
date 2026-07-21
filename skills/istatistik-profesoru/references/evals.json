@@ -1,0 +1,29 @@
+{
+  "skill_name": "istatistik-profesoru",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Merhaba, elimde bir klinik çalışma verisi var. Tedavi grubu (n=30) ve kontrol grubu (n=30) var, her birinin ağrı skoru ölçülmüş (0-10 arası). Gruplar arasında istatistiksel olarak anlamlı bir fark var mı acaba? Veriyi şimdi paylaşıyorum.",
+      "expected_output": "Kullanıcıya değişken ve analiz türünü soran sorular, normallik testi (Shapiro-Wilk), uygun test seçimi (t-testi veya Mann-Whitney), Rapor 1 (detaylı analiz + uzman yorum), Rapor 2 (Python kodu)",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Yaş ile sistolik kan basıncı arasında bir ilişki olduğunu düşünüyorum. 50 kişilik bir veri setim var, her ikisi de sürekli değişken. Korelasyon analizi yapar mısın?",
+      "expected_output": "Normallik kontrolü, Pearson veya Spearman korelasyon seçimi, scatter plot, korelasyon katsayısı ve p-değeri, Rapor 1 ve Rapor 2",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "3 farklı diyetin 8 haftalık kilo kaybına etkisini karşılaştırmak istiyorum. Diyet A, B ve C gruplarım var, her grupta 25 kişi. Hangi diyet daha etkili?",
+      "expected_output": "Normallik ve varyans homojenliği kontrolü, ANOVA veya Kruskal-Wallis, post-hoc test, Rapor 1 (gruplar arası karşılaştırma + yorum), Rapor 2 (Python kodu)",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Sigara içme durumu (içiyor/içmiyor) ile akciğer hastalığı varlığı (var/yok) arasında ilişki var mı? 2x2 bir tablom var.",
+      "expected_output": "Ki-kare veya Fisher's exact test, odds ratio, Rapor 1 ve Rapor 2",
+      "files": []
+    }
+  ]
+}
