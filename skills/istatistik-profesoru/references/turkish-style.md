@@ -1,8 +1,10 @@
+<!-- Güncelleme: 20260725 0053 -->
+
 # Turkish Thesis Style Guide
 
 ## Turkish Medical Thesis and Journal Writing Standards
 
-Version: 1.0
+Version: 1.1
 
 This document defines the default writing style for all Turkish medical
 theses and manuscripts unless the university or journal specifies
@@ -92,7 +94,8 @@ No space is left between % and the number.
 -   Use lowercase italic p.
 -   Report three decimal places whenever possible.
 -   Never write p=0,000.
--   Extremely small values should be reported as p\<0,001.
+-   Extremely small values should be reported as p<0,001.
+-   Leave **no space** around the `=` and `<` signs of a p-value (see §10).
 
 Correct
 
@@ -102,13 +105,19 @@ Correct
 
 *p*=0,999
 
-*p*\<0,001
+*p*<0,001
 
 Incorrect
 
 P=0,04
 
 p=0,000
+
+p < 0,001
+
+**Italic scope:** the italic *p* applies to Markdown and `.docx` output. The
+reportlab PDF pipeline in `scripts/md_to_pdf.py` converts `*...*` to italic, so
+write `*p*` in the Markdown source and it will survive into the PDF.
 
 ------------------------------------------------------------------------
 
@@ -124,11 +133,20 @@ Correct
 
 # 8. Median and IQR
 
+Use normal parentheses and an en-dash (–) with a space on each side. Never use
+square brackets or a comma between the bounds.
+
 Correct
 
-12,5 (8,2-16,7)
+12,5 (8,2 – 16,7)
 
-Median (IQR)
+Medyan (ÇAA)
+
+Incorrect
+
+12,5 [8,2-16,7]
+
+12,5 (8,2, 16,7)
 
 ------------------------------------------------------------------------
 
@@ -160,7 +178,7 @@ Incorrect
 
 Exceptions
 
-\%
+%
 
 °C
 
@@ -168,35 +186,61 @@ Exceptions
 
 # 10. Comparison Symbols
 
-Leave one space before and after comparison symbols.
+Two distinct cases — do not mix them:
+
+**a) Threshold / cut-off expressions on a measured variable:** leave one space
+before and after the symbol.
 
 Correct
 
 Wo ≥ 4 mm
 
-p \< 0,001
+VKİ > 30 kg/m²
 
-BMI \> 30 kg/m²
+Yaş ≤ 65 yıl
 
 Incorrect
 
 Wo≥4 mm
 
-p\<0,001
+VKİ>30
 
-BMI\>30
+**b) p-values and other test statistics:** leave **no space** around `=` or `<`.
+This is the canonical form for text, tables and figure legends alike.
+
+Correct
+
+p<0,001
+
+p=0,028
+
+(p>0,05)
+
+Incorrect
+
+p < 0,001
+
+p = 0,028
 
 ------------------------------------------------------------------------
 
 # 11. Confidence Interval
 
+Same notation as §8: normal parentheses, en-dash (–) with a space on each side.
+
 Correct
 
-OR=2,31 (%95 GA: 1,42-3,88)
+OR=2,31 (%95 GA: 1,42 – 3,88)
 
 or
 
-OR=2,31 (%95 güven aralığı: 1,42-3,88)
+OR=2,31 (%95 güven aralığı: 1,42 – 3,88)
+
+Incorrect
+
+OR=2,31 [1,42-3,88]
+
+OR=2,31 (%95 GA: 1,42, 3,88)
 
 ------------------------------------------------------------------------
 
@@ -300,17 +344,19 @@ Correct
 
 # 17. Parentheses
 
-No space before parentheses.
+Leave one space before the opening parenthesis, none inside it.
 
 Correct
 
-(Tablo 2)
+... yüksekti (Tablo 2)
 
-(p\<0,001)
+... anlamlıydı (p<0,001)
 
 Incorrect
 
-(Tablo 2)
+... yüksekti( Tablo 2 )
+
+... anlamlıydı ( p<0,001 )
 
 ------------------------------------------------------------------------
 
@@ -371,7 +417,7 @@ Do not interpret.
 Correct
 
 Wo ≥ 4 mm grubunda vida yerleştirme oranı anlamlı olarak yüksekti
-(p=0,021).
+(*p*=0,021).
 
 Incorrect
 
@@ -525,7 +571,15 @@ p=0,000
 
 Correct
 
-p\<0,001
+p<0,001
+
+Incorrect
+
+p < 0,001
+
+Correct
+
+p<0,001
 
 Incorrect
 
@@ -542,6 +596,14 @@ Wo≥4 mm
 Correct
 
 Wo ≥ 4 mm
+
+Incorrect
+
+12,5 [8,2-16,7]
+
+Correct
+
+12,5 (8,2 – 16,7)
 
 ------------------------------------------------------------------------
 
@@ -574,7 +636,11 @@ run.font.color.rgb = RGBColor(0xFF, 0x00, 0x00)  # updated text
 
 ✓ Three decimal places for p
 
-✓ p\<0,001 instead of p=0,000
+✓ p<0,001 instead of p=0,000
+
+✓ No space around the p-value operator (p<0,001), one space around measurement thresholds (VKİ > 30)
+
+✓ Median/CI as (8,2 – 16,7) — parentheses + spaced en-dash, never brackets
 
 ✓ SI units
 

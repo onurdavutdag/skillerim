@@ -1,4 +1,8 @@
+<!-- Güncelleme: 20260725 0053 -->
+
 # English Medical Writing Style Guide (SCI/SCIE Journals)
+
+Version: 1.1
 
 This document defines the default writing style for all English medical
 manuscripts unless the target journal specifies otherwise.
@@ -32,7 +36,8 @@ Incorrect: %73.5 73.5 %
 -   Always use italic lowercase *p*.
 -   Report to three decimal places.
 -   Never write p=0.000.
--   Use p\<0.001 for extremely small values.
+-   Use p<0.001 for extremely small values.
+-   Leave **no space** around the `=` and `<` signs of a p-value (see §9).
 
 Correct:
 
@@ -42,7 +47,7 @@ Correct:
 
 *p*=0.999
 
-*p*\<0.001
+*p*<0.001
 
 Incorrect:
 
@@ -51,6 +56,12 @@ P=0.04
 p=.04
 
 p=0.000
+
+p < 0.001
+
+**Italic scope:** the italic *p* applies to Markdown and `.docx` output. The
+reportlab PDF pipeline in `scripts/md_to_pdf.py` converts `*...*` to italic, so
+write `*p*` in the Markdown source and it will survive into the PDF.
 
 ------------------------------------------------------------------------
 
@@ -66,11 +77,20 @@ Correct:
 
 # 5. Median (IQR)
 
+Use normal parentheses and an en-dash (–) with a space on each side. Never use
+square brackets or a comma between the bounds.
+
 Correct:
 
-12.5 (8.2--16.7)
+12.5 (8.2 – 16.7)
 
 Median (IQR)
+
+Incorrect:
+
+12.5 [8.2-16.7]
+
+12.5 (8.2, 16.7)
 
 ------------------------------------------------------------------------
 
@@ -102,7 +122,7 @@ Exception:
 
 °C
 
-\%
+%
 
 ------------------------------------------------------------------------
 
@@ -132,33 +152,57 @@ CI
 
 # 8. Confidence Interval
 
+Same notation as §5: normal parentheses, en-dash (–) with a space on each side.
+
 Correct:
 
-OR 2.31 (95% CI 1.42--3.88)
+OR 2.31 (95% CI: 1.42 – 3.88)
 
-95% CI, 1.42--3.88
+Incorrect:
+
+OR 2.31 [1.42-3.88]
+
+OR 2.31 (95% CI 1.42, 3.88)
 
 ------------------------------------------------------------------------
 
 # 9. Mathematical Symbols
 
-Leave one space around comparison operators.
+Two distinct cases — do not mix them:
+
+**a) Threshold / cut-off expressions on a measured variable:** leave one space
+before and after the symbol.
 
 Correct:
 
-p \< 0.001
-
 BMI ≥ 30 kg/m²
 
-Wo \< 4 mm
+Wo < 4 mm
+
+Age ≤ 65 years
 
 Incorrect:
 
-p\<0.001
-
 BMI≥30
 
-Wo\<4 mm
+Wo<4 mm
+
+**b) p-values and other test statistics:** leave **no space** around `=` or `<`.
+This is the canonical form for text, tables and figure legends alike.
+
+Correct:
+
+p<0.001
+
+p=0.028
+
+(p>0.05)
+
+Incorrect:
+
+p < 0.001
+
+p = 0.028
 
 ------------------------------------------------------------------------
 
@@ -357,7 +401,7 @@ Do not interpret findings.
 
 Correct:
 
-The Wo≥4 mm group demonstrated a significantly higher screw insertion
+The Wo ≥ 4 mm group demonstrated a significantly higher screw insertion
 rate (*p*=0.012).
 
 Incorrect:
@@ -392,7 +436,7 @@ As shown in Figure 2...
 
 # 22. Spacing
 
-One space after punctuation.
+One space after punctuation — never two, never zero.
 
 Correct:
 
@@ -400,7 +444,9 @@ The mean age was 48.6 years. The BMI was...
 
 Incorrect:
 
-The mean age was 48.6 years. The BMI was...
+The mean age was 48.6 years.  The BMI was...
+
+The mean age was 48.6 years.The BMI was...
 
 ------------------------------------------------------------------------
 
@@ -408,13 +454,13 @@ The mean age was 48.6 years. The BMI was...
 
 Correct:
 
-L4--L5
+L4–L5
 
 C2
 
 95% CI
 
-p \< 0.001
+p<0.001
 
 48.6 ± 15.8
 
@@ -485,7 +531,11 @@ run.font.color.rgb = RGBColor(0xFF, 0x00, 0x00)  # updated text
 
 ✓ Three decimal places for *p*
 
-✓ p\<0.001 instead of p=0.000
+✓ p<0.001 instead of p=0.000
+
+✓ No space around the p-value operator (p<0.001), one space around measurement thresholds (BMI ≥ 30)
+
+✓ Median/CI as (8.2 – 16.7) — parentheses + spaced en-dash, never brackets
 
 ✓ SI units
 

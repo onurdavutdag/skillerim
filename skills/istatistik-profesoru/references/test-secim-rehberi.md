@@ -1,9 +1,11 @@
 # Statistical Test Selection Guide
 
+<!-- Güncelleme: 20260725 0053 -->
+
 **This guide is self-contained.** It carries every decision rule, assumption check,
 effect-size threshold, interpretation cut-off, and reporting template needed to pick
-and report a statistical test. You do **not** need to open the PDF lectures in
-`assets/` — those are optional background only. Numbers follow the English convention
+and report a statistical test. Opening the PDF lectures in `assets/` is **not**
+required — those are optional background only. Numbers follow the English convention
 (period as decimal separator, `%` after the number), matching the skill's formatting rules.
 
 ---
@@ -87,9 +89,9 @@ Normality + Outliers?
 ### 2 Independent Groups
 
 **Assumptions to check, in order**
-1. **Normality** within each group — Shapiro-Wilk (preferred for n < 50), Kolmogorov-Smirnov (n ≥ 50), plus a Q-Q plot. Assumption holds when p > 0.05.
-2. **Outliers** — box plot / IQR. Even with normal data, clear outliers push you to Mann-Whitney U.
-3. **Homogeneity of variance** — Levene's test. Only decides between Student's (p > 0.05) and Welch's (p ≤ 0.05) t-test; it does not affect the parametric-vs-nonparametric choice.
+1. **Normality** within each group — Shapiro-Wilk (valid up to n = 5000 in scipy; Lilliefors as an alternative), plus a Q-Q plot. Assumption holds when p>0.05.
+2. **Outliers** — box plot / IQR. Even with normal data, clear outliers push the choice to Mann-Whitney U.
+3. **Homogeneity of variance** — Levene's test. Only decides between Student's (p>0.05) and Welch's (p≤0.05) t-test; it does not affect the parametric-vs-nonparametric choice.
 
 **Test → effect size**
 | Test | Effect size | Small / Medium / Large |
@@ -112,7 +114,7 @@ Normality + Outliers?
 ### 3+ Independent Groups
 
 - **Welch's ANOVA is the recommended default** when data are normal, because it does not assume equal variances and loses little power when they happen to be equal. Post-hoc: **Games-Howell** (does not assume equal variances).
-- Classic one-way ANOVA (equal-variance) is acceptable when Levene p > 0.05; post-hoc Tukey HSD (equal group sizes) or Bonferroni (small samples).
+- Classic one-way ANOVA (equal-variance) is acceptable when Levene p>0.05; post-hoc Tukey HSD (equal group sizes) or Bonferroni (small samples).
 - Non-normal or outliers → **Kruskal-Wallis**; post-hoc **Dunn** with Bonferroni correction; report medians (IQR).
 - Severe outliers → **Robust ANOVA** (trimmed means + bootstrap).
 
@@ -290,9 +292,13 @@ than chance, negative = worse than chance. Interpretation (Landis-Koch):
 | Continuous, non-normal / ordinal | Median (IQR) |
 | Nominal / categorical | n (%) |
 
-**Normality criterion:** Shapiro-Wilk p > 0.05 **AND** skewness between −2 and +2 **AND**
-kurtosis between −7 and +7. Use Shapiro-Wilk for n < 50 and Kolmogorov-Smirnov for n ≥ 50,
-supported by a Q-Q plot and histogram.
+**Normality criterion:** Shapiro-Wilk p>0.05 **AND** skewness between −2 and +2 **AND**
+kurtosis between −7 and +7. Use Shapiro-Wilk as the default (scipy supports it up to
+n = 5000); if a Kolmogorov-Smirnov-family test is preferred for large n, use the
+**Lilliefors** variant (`statsmodels.stats.diagnostic.lilliefors`), which estimates the
+mean and SD from the data. A plain `scipy.stats.kstest(x, 'norm')` compares against the
+**standard** normal N(0,1) and will reject almost any unstandardized clinical variable —
+never use it on raw data. Support the decision with a Q-Q plot and histogram.
 
 ---
 

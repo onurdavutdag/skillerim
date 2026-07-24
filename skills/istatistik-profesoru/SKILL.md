@@ -1,6 +1,7 @@
 ---
 name: istatistik-profesoru
-description: Veri seti üzerinde istatistiksel analiz yapar ve iki kapsamlı rapor oluşturur: (1) uzman yorumlu detaylı analiz raporu, (2) Python teknik kodu raporu. Kullanıcı bir veri seti paylaştığında, "analiz yap", "istatistiksel test", "gruplar arasında fark var mı", "korelasyon", "regresyon", "ANOVA", "t-testi", "anlamlı mı" gibi ifadeler kullandığında bu skili mutlaka kullan. Veri analizi, hipotez testi, değişkenler arası ilişki, grup karşılaştırması veya tahmin modeli istendiğinde de tetikle — kullanıcı "analiz" kelimesini açıkça kullanmasa bile. Bu skill "İstatistik Profesörü"dür; kullanıcı "istatistik profesörü" dediğinde de bu skili kullan.
+description: Bu skill, bir veri seti üzerinde istatistiksel analiz yapıp iki kapsamlı rapor üretmek gerektiğinde kullanılmalıdır: (1) uzman yorumlu detaylı analiz raporu, (2) Python teknik kodu raporu. Kullanıcı bir veri seti paylaştığında; "analiz yap", "istatistiksel test", "gruplar arasında fark var mı", "korelasyon", "regresyon", "ANOVA", "t-testi", "anlamlı mı" gibi ifadeler kullandığında tetiklenir. Veri analizi, hipotez testi, değişkenler arası ilişki, grup karşılaştırması veya tahmin modeli istendiğinde de kullanılır — kullanıcı "analiz" kelimesini açıkça kullanmasa bile. Bu skill "İstatistik Profesörü"dür; kullanıcı "istatistik profesörü" dediğinde de bu skill kullanılır.
+version: 1.1
 ---
 
 # istatistik-profesörü
@@ -10,27 +11,19 @@ A skill that performs comprehensive statistical analysis and reporting when a da
 
 ## Automatic language detection
 
-If the input document is primarily written in Turkish, use:
-
-references/turkish-style.md
-
-If the input document is primarily written in English, use:
-
-references/english-style.md
-
+If the input document is primarily written in Turkish, use `references/turkish-style.md`.
+If it is primarily written in English, use `references/english-style.md`.
 If the user does not specify a language, always assume Turkish.
 
-Whenever a `.docx` file is created or updated, always apply the spelling and
-punctuation rules from the language-appropriate style file above (Turkish →
-turkish-style.md, English → english-style.md), in addition to the number/percent/
-p-value formatting rules in "Step 4.5". This covers TDK/journal spelling,
-capitalization, punctuation spacing, and comparison-symbol spacing.
+Whenever a `.docx` file is created or updated, apply the spelling and punctuation rules
+from the language-appropriate style file above, in addition to the number/percent/p-value
+rules in "Step 4.5". This covers TDK/journal spelling, capitalization, punctuation spacing,
+and comparison-symbol spacing.
 
-**Revision highlighting (MANDATORY):** whenever an **existing** `.docx` file is
-UPDATED, all inserted or modified text must be written in **red font color
-(RGB 255, 0, 0)** so the user can immediately see what changed. Unchanged text
-keeps its original color. Newly created documents (not updates) use normal
-black text. python-docx: `run.font.color.rgb = RGBColor(0xFF, 0x00, 0x00)`.
+**Revision highlighting (MANDATORY):** whenever an **existing** `.docx` file is UPDATED,
+write all inserted or modified text in **red font color (RGB 255, 0, 0)** so the user can
+immediately see what changed. Unchanged text keeps its original color. Newly created
+documents use normal black text. python-docx: `run.font.color.rgb = RGBColor(0xFF, 0x00, 0x00)`.
 
 ## Process
 
@@ -54,18 +47,18 @@ import pandas as pd
 import numpy as np
 
 df = pd.read_csv("data.csv")  # or the appropriate format
-print(df.shape)
-print(df.dtypes)
-print(df.describe())
-print(df.isnull().sum())
+print(df.shape, df.dtypes, df.describe(), df.isnull().sum(), sep="\n")
 ```
 
-Scope of inspection:
-- Number of observations (rows) and variables (columns)
-- Variable types: continuous, categorical, ordinal, binary
-- Missing-data ratio and distribution
-- Suspected outliers (IQR method or z-score)
-- Basic statistics (min, max, mean, median, std)
+Scope of inspection: number of observations and variables; variable types (continuous,
+categorical, ordinal, binary); missing-data ratio and pattern; suspected outliers (IQR or
+z-score); basic statistics (min, max, mean, median, std).
+
+**Missing-data policy (state it explicitly in Report 1):** report the missing ratio per
+variable. Below ~5% missing and no visible pattern, listwise deletion is acceptable — say so.
+Above that, or when missingness looks related to another variable, do not silently drop rows:
+tell the user, and state which option was taken (listwise deletion, pairwise deletion, or
+imputation). Never impute without telling the user.
 
 ---
 
@@ -74,85 +67,113 @@ Scope of inspection:
 **Normality:**
 ```python
 from scipy import stats
+from statsmodels.stats.diagnostic import lilliefors
 
-stat, p = stats.shapiro(df['variable'])  # n < 50
-stat, p = stats.kstest(df['variable'], 'norm')  # n >= 50
+stat, p = stats.shapiro(df['variable'])          # default; valid up to n = 5000
+stat, p = lilliefors(df['variable'], dist='norm')  # alternative for large n
 ```
-- Shapiro-Wilk: preferred for n < 50
-- Kolmogorov-Smirnov: for n ≥ 50
-- Visual check with Q-Q plot and histogram
+- Shapiro-Wilk is the default normality test.
+- If a Kolmogorov-Smirnov-family test is preferred, use the **Lilliefors** variant, which
+  estimates the mean and SD from the data.
+- **Never use `stats.kstest(x, 'norm')` on raw data** — it compares against the *standard*
+  normal N(0,1) and rejects almost any unstandardized clinical variable (age, blood pressure, BMI).
+- Support the decision with a Q-Q plot and histogram; check skewness (−2 to +2) and kurtosis (−7 to +7).
 
-**Homogeneity of Variance (for between-groups comparisons):**
+**Homogeneity of variance (between-groups comparisons only):**
 ```python
 stat, p = stats.levene(group1, group2)
 ```
 
-**Evaluation criterion:** p > 0.05 → assumption holds, p ≤ 0.05 → assumption violated → non-parametric test
+**Two separate decisions — do not merge them:**
+
+| Check | Result | Consequence |
+|---|---|---|
+| Normality (or clear outliers) | violated | Switch to the **non-parametric** test |
+| Levene (variance homogeneity) | violated | Stay parametric, switch to **Welch's** t-test / Welch's ANOVA |
+
+Levene failure alone never justifies a non-parametric test.
 
 ---
 
 ### Step 4 — Test Selection
 
-Use the decision table below. For detailed selection, follow `references/test-secim-rehberi.md` — it is self-contained.
+Use the decision table below. For the full decision tree — including agreement (Kappa, ICC,
+Bland-Altman), diagnostic tests/ROC, risk measures (RR, OR, NNT) and every effect-size
+threshold — follow `references/test-secim-rehberi.md`; it is self-contained.
 
-| Situation | Condition | Parametric Test | Non-parametric Alternative |
+| Situation | Condition | Test | Non-parametric alternative |
 |---|---|---|---|
-| 2 independent groups | Normal + homogeneous variance | Independent t-test | Mann-Whitney U |
-| 2 dependent groups | Normal | Paired t-test | Wilcoxon signed-rank |
-| 3+ independent groups | Normal + homogeneous variance | One-way ANOVA | Kruskal-Wallis |
-| 3+ dependent groups | Normal | Repeated-measures ANOVA | Friedman |
-| 2 continuous variables | Normal | Pearson correlation | Spearman / Kendall |
-| Categorical × Categorical | Expected frequency ≥ 5 | Chi-square | Fisher's Exact |
+| 2 independent groups | Normal, variances homogeneous | Student's t-test | Mann-Whitney U |
+| 2 independent groups | Normal, variances heterogeneous | **Welch's t-test** | Mann-Whitney U |
+| 2 dependent groups | Paired differences normal | Paired t-test | Wilcoxon signed-rank |
+| 3+ independent groups | Normal (default choice) | **Welch's ANOVA** → Games-Howell | Kruskal-Wallis → Dunn (Bonferroni) |
+| 3+ independent groups | Normal + Levene p>0.05 | One-way ANOVA → Tukey HSD | Kruskal-Wallis → Dunn |
+| 3+ dependent groups | Normal; check sphericity (Mauchly) | rmANOVA (Greenhouse-Geisser if violated) | Friedman → Durbin-Conover |
+| 2 continuous variables | Both normal | Pearson correlation | Spearman / Kendall |
+| Categorical × Categorical | ≥80% of cells have expected count ≥5 and none <1 | Pearson chi-square | Fisher's exact |
+| 2 dependent categorical | Paired 2×2 | McNemar | — |
 | Continuous prediction | Linear relationship | Linear regression | — |
 | Binary outcome prediction | — | Logistic regression | — |
 
-**Post-hoc (after ANOVA):**
-- Tukey HSD: equal group sizes
-- Bonferroni: small sample
-- Games-Howell: unequal variance
-
 Briefly explain to the user the selected test and **why it was chosen**.
+
+**Multiplicity:** when several tests are run on the same dataset (a common thesis pattern),
+state the number of comparisons and say whether an alpha correction was applied. For planned
+post-hoc comparisons use the correction bound to the primary test (see the table above). For
+many exploratory tests, either apply Bonferroni/Holm or explicitly label the results as
+exploratory and uncorrected — do not leave it unstated.
 
 ---
 
 ### Step 4.5 — Numeric Value Formatting Rules (MANDATORY)
 
-In all reports (report1, report2), tables, and any separate Word/PDF outputs, the following formatting rules are **always** followed. These rules are mandatory for consistency with academic/thesis-format tables:
+These rules apply to both reports, all tables, and any separate Word/PDF output.
 
-1. **Mean ± Standard Deviation:** leave **a space before and after** the `±` sign.
-   - Correct: `28.03 ± 5.04`
-   - Wrong: `28.03±5.04`
+1. **Mean ± SD:** one space before and after `±` → `28.03 ± 5.04`, never `28.03±5.04`.
 
-2. **Confidence intervals and median (IQR) notation:** do **not** use square brackets `[...]`; instead use normal parentheses `(...)` with an **en-dash (–)** between the lower and upper bounds, leaving a space before and after the dash (–).
-   - Correct: `(-5.359 – -0.662)`, for median `1.00 (0.30 – 2.50)`
+2. **Confidence intervals and median (IQR):** normal parentheses `(...)`, never square
+   brackets; an **en-dash (–)** with a space on each side between the bounds.
+   - Correct: `(-5.359 – -0.662)`, `1.00 (0.30 – 2.50)`
    - Wrong: `[-5.36, -0.66]`, `[0.30-2.50]`
 
-3. **Number of decimal places:**
-   - Difference/effect estimate (point estimate) and the lower/upper bounds of the confidence interval: **3 places after the decimal** (e.g., `-0.673`, `-1.848`, `0.502`).
-   - Descriptive statistics (mean, standard deviation, median, quartiles): 2 places is sufficient (e.g., `28.03 ± 5.04`).
-   - p-values: 3 places (e.g., `0.013`); if smaller than 0.001, written as `<0.001`.
+3. **Decimals:** effect/difference estimates and CI bounds → **3 decimals** (`-0.673`);
+   descriptive statistics (mean, SD, median, quartiles) → 2 decimals; p-values → 3 decimals,
+   written `<0.001` when smaller.
 
-4. **Decimal separator and percent (%) notation — language-dependent (TDK / international journals):** the percentage value is written with **exactly 1 decimal** place; leave a space before the unit.
-   - **In Turkish reports:** decimal separator is a **comma**; the `%` sign goes **before** the number. **All numbers, including p, use a comma.** E.g., `%73,5`, `36 (%73,5)`, `28,03 ± 5,04`, `25,9 ± 4,16 kg/m²`.
-   - **In English reports:** decimal separator is a **period**; the `%` sign goes **after** the number. E.g., `73.5%`, `36 (73.5%)`, `28.03 ± 5.04`, `25.9 ± 4.16 kg/m²`.
-   - In Python, format the percentage with `:.1f`; for Turkish `f"%{p:.1f}".replace('.', ',')`, for English `f"{p:.1f}%"`. Do not produce two-decimal percentages.
+4. **Decimal separator and percent — language-dependent.** The percentage carries **exactly
+   1 decimal**; leave a space before a unit.
+   - **Turkish:** comma separator, `%` **before** the number, commas everywhere including p →
+     `%73,5`, `36 (%73,5)`, `28,03 ± 5,04`, `25,9 ± 4,16 kg/m²`, `p=0,028`.
+   - **English:** period separator, `%` **after** the number → `73.5%`, `36 (73.5%)`, `p=0.028`.
+   - In Python: `f"%{p:.1f}".replace('.', ',')` for Turkish, `f"{p:.1f}%"` for English.
+     Never produce two-decimal percentages.
 
-5. **p-value notation in text (commentary):**
-   - Decimal separator is **language-dependent**: a **comma** in Turkish reports (`p=0,028`, `p<0,001`), a **period** in English reports (`p=0.028`, `p<0.001`).
-   - **p < 0.05 (significant):** name the relevant variable and write the p-value in its **original 3-decimal** form (e.g., `p=0.028`; if smaller than 0.001, `p<0.001`).
-   - **p > 0.05 (non-significant):** do **not** write the 3-decimal value; indicate non-significant variables collectively with `(p>0.05)`.
-   - This abbreviation (p>0.05) is only for text/commentary. **In tables, the p-value is always given in its original 3-decimal form — it is never abbreviated, including for non-significant (p>0.05) ones.**
+5. **Spacing around operators:**
+   - p-values and test statistics: **no space** → `p<0.001`, `p=0.028`, `(p>0.05)`.
+   - Measurement thresholds: **one space** → `BMI > 30 kg/m²`, `Wo ≥ 4 mm`.
 
-**Example — full format:**
+6. **Italic p:** write the symbol as `*p*` in Markdown and `.docx` output. `scripts/md_to_pdf.py`
+   converts `*...*` to italic, so the italics survive into the PDF.
+
+7. **p-value in running text:**
+   - Significant (p<0.05): name the variable and give the 3-decimal value (`p=0.028`, or `p<0.001`).
+   - Non-significant: do not list values one by one; group them as `(p>0.05)`.
+   - **In tables the p-value is always the original 3-decimal value — never abbreviated**, including
+     non-significant ones.
+
+**Example:**
 ```
 Difference (95% CI): -0.673 (-1.848 – 0.502)
 Mean ± SD: 28.03 ± 5.04
 Median (IQR): 1.00 (0.30 – 2.50)
 ```
 
-These rules apply both in the tables of Markdown/PDF reports and, if requested, in the separately produced Word (.docx) tables. When formatting f-strings in Python code, use `:.3f` (for CI/difference) and `:.2f` (for descriptive statistics); never produce square-bracket/comma patterns such as `[{lo:.2f}, {hi:.2f}]`.
+In Python f-strings use `:.3f` (CI/difference) and `:.2f` (descriptives); never emit
+square-bracket/comma patterns such as `[{lo:.2f}, {hi:.2f}]`.
 
-**Test-name footnote symbols (MANDATORY):** In results tables, the following standard symbol indicating the test used is added next to the p-value; the legend for these symbols (only those actually used in that table) is written as a footnote below the table:
+**Test-name footnote symbols (MANDATORY):** add the symbol of the test used next to each
+p-value in a results table, and write the legend for the symbols **actually used in that
+table** as a footnote below it:
 
 | Symbol | Test |
 |---|---|
@@ -164,14 +185,18 @@ These rules apply both in the tables of Markdown/PDF reports and, if requested, 
 | ††† | McNemar test |
 | § | Paired-samples t-test |
 | §§ | Wilcoxon signed-rank test |
+| a | McNemar-Bowker test of symmetry |
+| N/A | Not applicable |
 
-If a test not in this list is used, assign the next consistently available symbol and define it explicitly in the footnote — since a symbol's meaning may change from table to table, each table must carry its own legend.
+**If a test is not on this list** (Kruskal-Wallis, ANOVA, Spearman, regression, Stuart-Maxwell …),
+**do not reuse one of the existing symbols for it** — `‡` in particular belongs to Welch's t-test
+only. Either propose a new symbol and tell the user, or name the test in words in the footnote.
+Each table carries its own legend.
 
 ---
 
 ### Step 5 — Perform the Analyses (Python)
 
-Required libraries:
 ```python
 import pandas as pd
 import numpy as np
@@ -180,289 +205,117 @@ import statsmodels.api as sm
 from statsmodels.formula.api import ols
 import matplotlib.pyplot as plt
 import seaborn as sns
-import pingouin as pg
+import pingouin as pg   # effect sizes and post-hoc: pg.compute_effsize, pg.pairwise_gameshowell
 ```
+
+Use `pingouin` for effect sizes and post-hoc tests (`pg.compute_effsize(a, b, eftype='cohen')`,
+`pg.pairwise_gameshowell`, `pg.welch_anova`) rather than hand-rolling the formulas. If pingouin
+is not installed, say so and compute the effect size explicitly.
 
 ---
 
 ### Step 6 — Create and Save the Two Reports
 
-Save the reports to the `results/<data-name>/` folder in the project root:
+Write the reports under the project root:
 
 ```
-results/
-└── <data-name>/        ← the data file name or the name given by the user
-    ├── report1.md      ← Detailed analysis report (Markdown)
-    ├── report1.pdf     ← Detailed analysis report (PDF)
-    ├── report2.md      ← Python technical report (Markdown)
-    └── report2.pdf     ← Python technical report (PDF)
+output/analiz/<veri-adı>/
+├── Rapor1 YYYYAAGG SSDD.md    ← Detailed analysis report
+├── Rapor1 YYYYAAGG SSDD.pdf
+├── Rapor2 YYYYAAGG SSDD.md    ← Python technical report
+├── Rapor2 YYYYAAGG SSDD.pdf
+└── *.png                       ← charts, absolute paths when referenced
 ```
 
-Create the folder if it does not exist. Tell the user the folder name before writing the files.
+`<veri-adı>` is the data file name or a name given by the user. The `YYYYAAGG SSDD` suffix is
+the **local** creation date-time (take it from `date` if unsure). Create the folder if missing
+and tell the user the folder name before writing. When updating an existing report, keep its
+original file name — the date tag is only added when a file is first created.
 
-**PDF Generation:**
+**PDF generation:** write each report as `.md` first, then convert.
 
-Write each report first as `.md`, then convert it to PDF.
+Two rules prevent the recurring failures (missing images, Ş/Ğ shown as boxes):
 
-**Critical rules (to prevent images from not loading and letters like Ş/Ğ appearing as boxes):**
+1. Save every chart with an **absolute path** (`os.path.abspath`) and reference it in the
+   markdown with that absolute path — `![caption](/abs/path/chart.png)`. A relative path breaks
+   as soon as the converter runs from another working directory.
+2. Never rely on a default font (Helvetica, LaTeX default, browser sans-serif); a font with
+   Turkish coverage must be registered explicitly.
 
-1. **Images are always saved with an absolute path** (`os.path.abspath(...)`) and are referenced in the markdown with that absolute path as `![caption](absolute/path/chart.png)`. Do not use relative paths — if the PDF converter runs from a different working directory, the image reference breaks.
-2. **A font with Turkish-character support is explicitly registered/specified.** In no method rely on the default font (Helvetica, LaTeX's default font, the browser's default sans-serif); these render characters like Ş, ş, Ğ, ğ, İ, ı as boxes (□).
-
-**Method 1 (preferred): the `md_to_pdf` function with reportlab**
-
-Use the following function as-is — it includes Turkish font registration and image-embedding support:
+**Method 1 (preferred): `scripts/md_to_pdf.py`** — handles Turkish font registration, absolute
+image resolution, pipe tables and inline `*italic*`/`**bold**`. No extra installation beyond reportlab.
 
 ```python
-import os
+import sys, os
+sys.path.insert(0, os.path.join(SKILL_DIR, "scripts"))
+from md_to_pdf import md_to_pdf
 
-def md_to_pdf(md_text, out_path, md_dir=None):
-    """md_dir: base folder for resolving relative image paths inside the markdown (if omitted, an absolute path is expected)."""
-    from reportlab.lib.pagesizes import A4, landscape
-    from reportlab.lib import colors
-    from reportlab.platypus import (SimpleDocTemplate, Table, TableStyle,
-                                     Paragraph, Spacer, HRFlowable, Image)
-    from reportlab.lib.styles import ParagraphStyle
-    from reportlab.lib.units import cm
-    from reportlab.pdfbase import pdfmetrics
-    from reportlab.pdfbase.ttfonts import TTFont
-    import re
-
-    # --- Register a font with Turkish-character support (cross-platform search) ---
-    font_candidates = [
-        (r"C:\Windows\Fonts\arial.ttf", r"C:\Windows\Fonts\arialbd.ttf"),           # Windows
-        ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-         "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),                    # Linux
-        ("/System/Library/Fonts/Supplemental/Arial.ttf",
-         "/System/Library/Fonts/Supplemental/Arial Bold.ttf"),                       # macOS
-    ]
-    F, FB = 'Helvetica', 'Helvetica-Bold'
-    for reg, bold in font_candidates:
-        if os.path.exists(reg) and os.path.exists(bold):
-            pdfmetrics.registerFont(TTFont('TR', reg))
-            pdfmetrics.registerFont(TTFont('TRB', bold))
-            F, FB = 'TR', 'TRB'
-            break
-    if F == 'Helvetica':
-        print("WARNING: No font with Turkish-character support found, using Helvetica — "
-              "characters like Ş/Ğ/İ/ı may appear incorrectly.")
-
-    H1 = ParagraphStyle('H1', fontName=FB, fontSize=13, spaceAfter=8, alignment=1,
-                         textColor=colors.HexColor('#1F3864'))
-    H2 = ParagraphStyle('H2', fontName=FB, fontSize=10, spaceAfter=4, spaceBefore=10,
-                         textColor=colors.HexColor('#2E4DA0'))
-    H3 = ParagraphStyle('H3', fontName=FB, fontSize=9, spaceAfter=3, spaceBefore=6,
-                         textColor=colors.HexColor('#4472C4'))
-    BODY = ParagraphStyle('B', fontName=F, fontSize=8.5, spaceAfter=3, leading=12)
-    CODE = ParagraphStyle('C', fontName='Courier', fontSize=7.5, spaceAfter=4,
-                           backColor=colors.HexColor('#F5F5F5'), leading=11)
-    NOTE = ParagraphStyle('N', fontName=F, fontSize=7.5, textColor=colors.grey, spaceBefore=6)
-
-    doc = SimpleDocTemplate(out_path, pagesize=landscape(A4),
-                             leftMargin=1.5*cm, rightMargin=1.5*cm,
-                             topMargin=1.5*cm, bottomMargin=1.5*cm)
-    elems = []
-    page_w = landscape(A4)[0] - 3*cm
-
-    in_code, code_buf = False, []
-    table_rows, in_table = [], False
-    img_count = 0
-
-    def flush_table():
-        nonlocal table_rows, in_table
-        if not (in_table and table_rows):
-            return
-        col_count = max(len(r) for r in table_rows)
-        col_w = [page_w / col_count] * col_count
-        tbl_data = [[Paragraph(c.replace('**', ''), BODY) for c in tr] for tr in table_rows]
-        tbl = Table(tbl_data, colWidths=col_w[:len(table_rows[0])], repeatRows=1)
-        cmds = [
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2E4DA0')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('FONTNAME', (0, 0), (-1, 0), FB),
-            ('FONTSIZE', (0, 0), (-1, -1), 8),
-            ('FONTNAME', (0, 1), (-1, -1), F),
-            ('GRID', (0, 0), (-1, -1), 0.3, colors.HexColor('#CCCCCC')),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#EEF2FF')]),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ]
-        tbl.setStyle(TableStyle(cmds))
-        elems.append(tbl)
-        elems.append(Spacer(1, 0.3*cm))
-        table_rows = []
-        in_table = False
-
-    for line in md_text.split('\n'):
-        if line.strip().startswith('```'):
-            if not in_code:
-                in_code, code_buf = True, []
-            else:
-                in_code = False
-                if code_buf:
-                    elems.append(Paragraph('<br/>'.join(code_buf), CODE))
-            continue
-        if in_code:
-            code_buf.append(line.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;'))
-            continue
-
-        # Image: ![caption](path)
-        img_match = re.match(r'!\[(.*?)\]\((.*?)\)', line.strip())
-        if img_match:
-            flush_table()
-            alt, path = img_match.group(1), img_match.group(2)
-            full_path = path if os.path.isabs(path) else os.path.join(md_dir or '', path)
-            full_path = os.path.abspath(full_path)
-            if os.path.exists(full_path):
-                img = Image(full_path)
-                ratio = min(page_w / img.drawWidth, 1.0)
-                img.drawWidth *= ratio
-                img.drawHeight *= ratio
-                elems.append(img)
-                elems.append(Spacer(1, 0.2*cm))
-                img_count += 1
-            else:
-                elems.append(Paragraph(f"[Image not found: {path}]", NOTE))
-            continue
-
-        if line.startswith('|'):
-            if '---' in line:
-                continue
-            table_rows.append([c.strip() for c in line.strip('|').split('|')])
-            in_table = True
-            continue
-        else:
-            flush_table()
-
-        if line.startswith('# '):
-            elems.append(Paragraph(line[2:], H1))
-            elems.append(HRFlowable(width='100%', thickness=1, color=colors.HexColor('#2E4DA0'), spaceAfter=6))
-        elif line.startswith('## '):
-            elems.append(Paragraph(line[3:], H2))
-        elif line.startswith('### '):
-            elems.append(Paragraph(line[4:], H3))
-        elif line.startswith('> '):
-            elems.append(Paragraph(line[2:], NOTE))
-        elif line.startswith('- '):
-            elems.append(Paragraph(f"• {line[2:]}", BODY))
-        elif line.strip():
-            elems.append(Paragraph(line, BODY))
-        elif elems:
-            elems.append(Spacer(1, 0.2*cm))
-
-    flush_table()
-    doc.build(elems)
-    print(f"PDF created: {out_path} ({img_count} images embedded)")
-    return True
-
-# Usage — also use absolute paths when saving charts:
-# plt.savefig(os.path.join(OUT_DIR, "histogram_age.png"), dpi=150, bbox_inches='tight')
-# inside report1_md: f"![Age histogram]({os.path.join(OUT_DIR, 'histogram_age.png')})"
-md_to_pdf(report1_md, os.path.join(OUT_DIR, "report1.pdf"), md_dir=OUT_DIR)
+plt.savefig(os.path.join(OUT_DIR, "histogram_yas.png"), dpi=150, bbox_inches='tight')
+# in the markdown: f"![Yaş histogramı]({os.path.join(OUT_DIR, 'histogram_yas.png')})"
+md_to_pdf(rapor1_md, os.path.join(OUT_DIR, "Rapor1 20260725 0053.pdf"), md_dir=OUT_DIR)
 ```
 
-**Method 2 (if weasyprint is installed):**
+It also runs standalone: `python md_to_pdf.py "Rapor1 ....md" "Rapor1 ....pdf"`.
 
+**Method 2 (weasyprint, if installed):** `base_url` is mandatory so relative image paths resolve.
 ```python
-import subprocess
-
-html = f"""<html><head><meta charset="utf-8">
-<style>
-  body {{ font-family: "Arial", "DejaVu Sans", "Liberation Sans", sans-serif; }}
-  img {{ max-width: 100%; }}
-</style></head><body>{markdown_to_html(report1_md)}</body></html>"""
-# base_url is MANDATORY so relative image paths can be resolved:
 from weasyprint import HTML
-HTML(string=html, base_url=OUT_DIR).write_pdf(os.path.join(OUT_DIR, "report1.pdf"))
+HTML(string=html, base_url=OUT_DIR).write_pdf(out_pdf)   # CSS: font-family: "Arial", "DejaVu Sans"
 ```
 
-**Method 3 (if pandoc is installed on the system):**
-
+**Method 3 (pandoc, if installed):**
 ```python
-subprocess.run([
-    "pandoc", "report1.md", "-o", "report1.pdf",
-    "--pdf-engine=xelatex",
-    "-V", "mainfont=Arial",       # mandatory for Turkish-character support
-    "--resource-path", OUT_DIR,   # folder containing the images
-])
+subprocess.run(["pandoc", md_path, "-o", pdf_path, "--pdf-engine=xelatex",
+                "-V", "mainfont=Arial", "--resource-path", OUT_DIR])
 ```
 
-Try the methods in this order (reportlab first, because it requires no extra installation and is the most reliable against Turkish/image issues). If a method fails, print the error and move on to the next. If none work, tell the user which tool is missing and continue with the `.md` file.
+Try the methods in this order — reportlab first, because it needs no extra installation and is
+the most reliable against Turkish-character and image problems. On failure print the error and
+move to the next. If none work, name the missing tool and deliver the `.md`.
 
-When PDF generation is complete, give the user a short summary: how many pages/images were produced and which method was used (e.g., "report1.pdf created — reportlab, 3 images embedded").
+When PDF generation completes, give a one-line summary: which method was used and how many
+images were embedded (e.g. "Rapor1 ... .pdf created — reportlab, 3 images embedded").
 
 ---
 
 ## REPORT 1: Detailed Analysis Report
 
-*Written in the detected language (see "Automatic language detection"; default: Turkish).*
+*Written in the detected language (default: Turkish).*
 
-### 1. Dataset Summary
-- Definition and size of the dataset
-- Description and types of the variables
-- Missing-data and outlier status
-
-### 2. Analysis Objective
-- Research question and hypothesis (H₀ / H₁)
-- Variables examined
-
-### 3. Method
-- Selected test(s) and their explanation
-- Assumption-check results (table + commentary)
-- Rationale for test selection
-
-### 4. Results
-- Test statistic, degrees of freedom, p-value
-- Effect size: Cohen's d / eta-squared (η²) / r
-- Confidence intervals (if needed)
-- Visuals: histogram, box plot, scatter plot, Q-Q plot, heatmap
-
-### 5. Expert Commentary
-- Statistical significance: interpretation of p < 0.05 / p < 0.01
-- Practical/clinical significance: interpretation of effect size
-  - Cohen's d: small=0.2, medium=0.5, large=0.8
-  - η²: small=0.01, medium=0.06, large=0.14
-- Interpretation and importance of the results
-- Limitations (sample size, sampling method, etc.)
-- Recommendations and future research directions
+1. **Dataset summary** — definition and size, variable descriptions and types, missing-data and outlier status.
+2. **Analysis objective** — research question, H₀ / H₁, variables examined.
+3. **Method** — selected test(s), assumption-check results (table + commentary), rationale for the choice.
+4. **Results** — test statistic, degrees of freedom, p-value; effect size (Cohen's d / η² / r);
+   confidence intervals; visuals (histogram, box plot, scatter, Q-Q, heatmap).
+5. **Expert commentary** — statistical significance; practical/clinical significance from the effect
+   size (Cohen's d: 0.2 / 0.5 / 0.8; η²: 0.01 / 0.06 / 0.14); interpretation; limitations (sample
+   size, sampling method, multiplicity, missing data); recommendations and future directions.
 
 ---
 
 ## REPORT 2: Python Technical Report
 
-*Written in the detected language (see "Automatic language detection"; default: Turkish).*
+*Written in the detected language (default: Turkish).*
 
-### 1. Libraries Used
-
-| Library | Purpose | Step Where Used |
-|---|---|---|
-| pandas | Data loading and manipulation | Data preprocessing |
-| numpy | Numerical computation | All steps |
-| scipy.stats | Statistical tests | Assumption checks + main tests |
-| statsmodels | ANOVA, regression | Advanced analyses |
-| matplotlib | Basic visualization | All charts |
-| seaborn | Statistical visualization | Distribution and relationship charts |
-| pingouin | Advanced statistics | Effect size, post-hoc |
-
-### 2. Step-by-Step Code Flow
-
-For each step:
-- The purpose of the step
-- The function and parameters used
-- An annotated code block
-
-### 3. Full Runnable Code
-
-Python code that runs the entire analysis from start to finish, as a single block.
-- Comments should be in the report's language
-- Outputs should be interpreted
-- Charts should be in a saveable format
+1. **Libraries used** — table of library / purpose / step where used (pandas, numpy, scipy.stats,
+   statsmodels, matplotlib, seaborn, pingouin).
+2. **Step-by-step code flow** — for each step: its purpose, the function and parameters used, an
+   annotated code block.
+3. **Full runnable code** — the entire analysis start to finish as a single block, comments in the
+   report's language, outputs interpreted, charts saved to `output/analiz/<veri-adı>/`.
 
 ---
 
 ## Important Notes
 
-- Do not start the analysis before the data arrives; ask for the data first
-- Always report statistical significance (p-value) together with **practical significance** (effect size)
-- If an assumption is violated, state this explicitly and choose the non-parametric alternative
-- Use `references/test-secim-rehberi.md` for test selection — it is self-contained; the PDFs in `assets/` are optional background only
-- Number/percent/p-value formatting and `.docx` spelling/punctuation follow **Step 4.5** and "Automatic language detection" — applies to all report tables and Word/PDF outputs
+- Do not start the analysis before the data arrives; ask for the data first.
+- Always report statistical significance (p-value) together with **practical significance** (effect size).
+- If an assumption is violated, state it explicitly and take the correct branch — non-parametric for
+  a normality violation, Welch for a variance violation (Step 3).
+- Use `references/test-secim-rehberi.md` for test selection; it is self-contained. The PDFs in
+  `assets/` are optional background lecture material only.
+- Number/percent/p-value formatting and `.docx` spelling follow **Step 4.5** and the language style
+  files — applies to every report table and Word/PDF output.
+- To exercise the skill without user data, `scripts/generate_sample_data.py` writes three sample
+  datasets (two-group, correlation, ANOVA); `references/evals.json` holds the four trigger scenarios
+  these datasets correspond to.
