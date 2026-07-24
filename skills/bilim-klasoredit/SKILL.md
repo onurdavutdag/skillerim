@@ -1,16 +1,16 @@
 ---
 name: bilim-klasoredit
 description: >-
-  Bir "Bilim ..." proje klasöründeki (ör. Bilim Fare Tümör, Bilim Tez C2) tüm
-  dosya ve alt klasörleri 6 üst kategoriye indirger: Introduction,
-  Materyal-Method, Result, Discussion-Conclusion, (projeye özgü 5. kategori),
-  Diğer. Kullanıcı "6'lar kuralını uygula", "bu şekilde sınıflandır", "proje
-  klasörünü düzenle/sınıflandır", "dosyaları kategorilere ayır", "diğer bilim
-  dosyalarına da uygula" dediğinde bu skill'i kullan. İşlem sonunda kök dizin
-  tam olarak bu 6 klasör + output/ + desktop.ini (varsa) içerir, başka loose
-  dosya kalmaz. İlk kullanımda yalnızca 5. kategori ismi ve kategori dilleri
-  netleştirilir; sonraki her "Bilim ..." projesinde tekrar sorulmadan doğrudan
-  uygulanır.
+  Bu skill, bir "Bilim ..." proje klasöründeki (ör. Bilim Fare Tümör, Bilim Tez
+  C2) tüm dosya ve alt klasörleri 6 üst kategoriye indirmek için kullanılmalıdır:
+  Introduction, Materyal-Method, Result, Discussion-Conclusion, (projeye özgü 5.
+  kategori), Diğer. Kullanıcı "6'lar kuralını uygula", "bu şekilde sınıflandır",
+  "proje klasörünü düzenle/sınıflandır", "dosyaları kategorilere ayır", "diğer
+  bilim dosyalarına da uygula" dediğinde bu skill kullanılır. İşlem sonunda kök
+  dizin tam olarak bu 6 klasör + output/ + desktop.ini (varsa) içerir, başka
+  loose dosya kalmaz. İlk kullanımda yalnızca 5. kategori ismi ve kategori
+  dilleri netleştirilir; sonraki her "Bilim ..." projesinde tekrar sorulmadan
+  doğrudan uygulanır.
 ---
 
 # Bilim Project Folder Classification — The "6s Rule"
@@ -74,7 +74,7 @@ When done, the root contains **exactly** these 6 folders (numbered: `1) ...` –
 3. **Assign each item to a category** — per the 6 definitions above. Open mixed
    folders first, distribute their content one by one.
 4. **Show the move plan** (source → target list) — especially in a large project applied for the first time,
-   let the user see at a glance what goes where. In known/repeat projects this step can be kept short.
+   so the user sees at a glance what goes where. In known/repeat projects this step can be kept short.
 5. **Move.** The target category folders are created with numbered names (`1)
    Introduction`, `2) Materyal-Method` ...). In PowerShell, for a same-unit
    move use `Move-Item`:
@@ -86,7 +86,7 @@ When done, the root contains **exactly** these 6 folders (numbered: `1) ...` –
    `Move-Item` moves the metadata without downloading the content — it causes no problem.
 6. **Delete the emptied folders**, verify that nothing remains in the root besides the 6 numbered
    categories + `output/` + `desktop.ini`.
-7. **Optional inventory note** — you can document the classification as
+7. **Optional inventory note** — the classification can be documented as
    `output/md/İnceleme ... .md` (precedent: Bilim Tez C2); not mandatory.
 
 ## Precedent projects
@@ -94,6 +94,9 @@ When done, the root contains **exactly** these 6 folders (numbered: `1) ...` –
 Bilim Tez C2 (applied first) → Bilim Fare Tümör (Introduction/
 Materyal-Method/Result/Discussion-Conclusion English; the 5th and 6th categories
 Turkish).
+
+Worked before/after example (loose-file → numbered-category mapping):
+`examples/bilim-fare-tumor-ornegi.md`.
 
 ## PDF naming subtask — the `bilim-s-pdf` subagent
 

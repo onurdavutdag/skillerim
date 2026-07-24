@@ -5,8 +5,9 @@
 > removed from the skill, or a new subagent is connected, this file is updated with
 > the SAME change.
 >
-> _Last update: 2026-07-21 — the skill name was changed to `bilim-klasoredit`;
-> the subagent name was synchronized with `bilim-s-pdf`._
+> _Last update: 2026-07-25 — description rewritten in third person (skill-reviewer
+> standard); PDF-naming full rules de-duplicated (single source of truth = the
+> subagent definition); an `examples/` worked before/after example was added._
 
 ---
 
@@ -35,25 +36,16 @@ file/shortcut remains (it is moved to the 6th category). Rule detail: `SKILL.md`
 | Input | The `*.pdf` files in a folder (or the specified ones) |
 | Output | Renamed files + an old→new name table report |
 
-**Naming rule summary:**
-- `YYYY` = publication/posted year, `LastName.` = only the first author's last name
-  (ends with a period), `Journal Name.` = the journal's **full name** (ends with a
-  period; not converted to the NLM/PubMed abbreviation; if a preprint server —
-  Research Square, etc. — the server's name is used).
-- In the title, `:` and the subtitle-separator em dash `—` → `.`; other Windows-invalid
-  characters (`\ / * ? " < > |`) are cleaned.
-- If the total name (including the extension, excluding the folder path) exceeds the default
-  **120-character** limit: first the subtitle is dropped; if the subtitle is distinguishing
-  information, the last word(s) are cropped at a word boundary instead (no ellipsis).
-- If there is a `+` sign immediately before/after the year in the original filename
-  (the user's priority/filter tag), its position (prefix/suffix) is preserved exactly in the new
-  name — a `+` in the middle of the title (e.g. a scientific term)
-  is not included in this rule.
-- Author/year/journal information is **never fabricated without being verified** from the PDF text
-  — a file that cannot be confirmed is skipped, and the user is notified.
+**Naming rule (summary only):** Pattern `YYYY LastName. Journal Name. Title.pdf`
+— journal name in **full** (not the NLM/PubMed abbreviation); `:` / subtitle em
+dash → `.`; a **120-character** cap (drop the subtitle, then crop at a word
+boundary); a `+` priority tag by the year keeps its prefix/suffix position; and
+author/year/journal are **never fabricated** — unverifiable files are skipped.
 
-Full rule and step-by-step method: in the subagent definition itself
-(`~/.claude/agents/bilim-s-pdf.md`).
+**Full rule and step-by-step method live only in the subagent definition**
+(`~/.claude/agents/bilim-s-pdf.md`) — the single source of truth. This README
+intentionally does not duplicate the detailed edge cases (invalid-character list,
+preprint-server names, middle-of-title `+` exception).
 
 ## 3. Red lines
 
@@ -69,4 +61,5 @@ Full rule and step-by-step method: in the subagent definition itself
 |---|---|
 | Skill instruction | `SKILL.md` |
 | Guide (this file) | `README.md` |
+| Worked example | `examples/bilim-fare-tumor-ornegi.md` |
 | Subagent | `../../agents/bilim-s-pdf.md` |
