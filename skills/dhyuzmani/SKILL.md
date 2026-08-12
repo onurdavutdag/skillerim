@@ -46,6 +46,9 @@ Sonra:
 python -B scripts/dhyuzmani_kadro.py "<proje>/output/csv" --json <tmp>/kadro.json
 ```
 
+`<proje>` = `C:\Users\onurd\OneDrive\1) My Files\2) Kişisel\Mart 2027 atama` (bilinen konum;
+taşınmışsa `1[0-9][0-9] DHY*` desenli dosyalar aranır ve `references/veri-kaynaklari.md` §5 güncellenir).
+
 Beklenen (120–129. dönem, değişmediyse): **88 benzersiz birim / 127 kadro**.
 
 > ⚠️ CSV'ler hekim ad-soyadı içerir. Script yalnız okur, hastane düzeyinde toplu çıktı üretir.
@@ -111,6 +114,7 @@ en yakın birkaç hastane ve dikkat çeken bulgular.
 | `scripts/dhyuzmani_mesafe.py` | KGM cetveli + ilçe ofsetlerinden referans şehre mesafe |
 | `scripts/dhyuzmani_yatak.py` | Yerel yatak haritası; eksikse KHGM listesini indirip eşler |
 | `scripts/dhyuzmani_excel.py` | Tüm veriyi birleştirip biçimli Excel üretir |
+| `scripts/dhyuzmani_dogrula.py` | Öz-denetim: KGM değerleri, varlık bütünlüğü, 4 web düzeltmesi, kadro 88/127 |
 | `references/veri-kaynaklari.md` | Kaynak öncelikleri, bilinen tuzaklar, doğrulama değerleri |
 | `references/ajan-sablonu.md` | Paralel tarama ajanı promptu ve çıktı şeması |
 | `assets/kgm_il_mesafe.xlsx` | KGM İller Arası Mesafe Cetveli (03.03.2026) |

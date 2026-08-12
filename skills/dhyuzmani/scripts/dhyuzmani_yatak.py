@@ -51,19 +51,41 @@ def yerel_harita():
 
 
 def khgm_indir():
-    """KHGM tesis listesini önbelleğe indirir (yalnız gerektiğinde)."""
+    """KHGM tesis listesini önbelleğe indirir (yalnız gerektiğinde).
+
+    Geçici ada indirilip bitince taşınır — yarım kalan indirme önbelleğe
+    'tamammış gibi' yerleşip sonraki çalıştırmaları bozmasın diye.
+    """
     if os.path.exists(KHGM_XLS):
         return KHGM_XLS
     os.makedirs(ONBELLEK, exist_ok=True)
+    gecici = KHGM_XLS + ".tmp"
     print("KHGM tesis listesi indiriliyor (~5 MB)...")
-    urllib.request.urlretrieve(KHGM_URL, KHGM_XLS)
+    try:
+        with urllib.request.urlopen(KHGM_URL, timeout=60) as kaynak, open(gecici, "wb") as hedef:
+            hedef.write(kaynak.read())
+        os.replace(gecici, KHGM_XLS)
+    except Exception as hata:
+        if os.path.exists(gecici):
+            os.remove(gecici)
+        raise SystemExit(f"KHGM listesi indirilemedi ({hata}). "
+                         f"Ağ yoksa dosyayı elle {KHGM_XLS} konumuna koyabilirsiniz.")
     return KHGM_XLS
 
 
 def khgm_yukle():
     """[(il, ilce, normalize_ad, yatak, ham_ad)] listesi döndürür."""
-    import xlrd
-    ws = xlrd.open_workbook(khgm_indir()).sheet_by_index(0)
+    try:
+        import xlrd
+    except ImportError:
+        raise SystemExit("xlrd kurulu değil (KHGM .xls dosyası için gerekli): pip install xlrd")
+    try:
+        ws = xlrd.open_workbook(khgm_indir()).sheet_by_index(0)
+    except Exception as hata:
+        # bozuk önbellek: sil ki sonraki çalıştırma taze indirsin
+        if os.path.exists(KHGM_XLS):
+            os.remove(KHGM_XLS)
+        raise SystemExit(f"KHGM önbelleği okunamadı ve silindi ({hata}); yeniden çalıştırın.")
     kayitlar = []
     for i in range(1, ws.nrows):
         satir = ws.row(i)

@@ -9,7 +9,9 @@
 > ise tarama ajanı promptunun tek doğru kaynağıdır. Biri değişince diğerleriyle çelişmediği
 > doğrulanır.
 >
-> _Son güncelleme: 2026-08-11 — skill oluşturuldu._
+> _Son güncelleme: 2026-08-12 — yatak_map 4 web düzeltmesiyle eşitlendi, TR büyük harf
+> düzeltmesi (kadro/mesafe/excel), KHGM indirmesi güvenli hale getirildi,
+> `dhyuzmani_dogrula.py` öz-denetim scripti eklendi._
 
 ---
 
@@ -56,8 +58,13 @@ Kullanıcı kararı: tarama **her zaman listenin tamamını** kapsar, kısmi tar
 | `dhyuzmani_mesafe.py` | `kadro.json` | `mesafe.json` | İl merkezleri için KGM değeri, ilçeler için doğrulanmış ofset; `~` ile yaklaşıklık işareti |
 | `dhyuzmani_yatak.py` | `mesafe.json` | `yatak.json` | Yerel haritadan okur; eksik hastane varsa KHGM listesini indirip bulanık eşleşmeyle bulur |
 | `dhyuzmani_excel.py` | `yatak.json` + tarama JSON | `.xlsx` | Hepsini birleştirip biçimli Excel üretir (dondurulmuş başlık, filtre, vurgu, Notlar sayfası) |
+| `dhyuzmani_dogrula.py` | (isteğe bağlı CSV klasörü) | stdout + çıkış kodu | Öz-denetim: KGM doğrulama değerleri, TR büyük harf, varlık bütünlüğü, 4 web düzeltmesi, kadro 88/127 |
 
 Hepsi bağımsız çalıştırılabilir; `--birim` ile tek hastane sorgusu da yapılabilir.
+Kadro, mesafe ve excel scriptleri Türkçe büyük harf çevirisi (`TR_BUYUK`) kullanır —
+ASCII `upper()` 'i'yi 'I' yaptığı için "gaziantep" gibi küçük harfli girdiler KGM'deki
+"GAZİANTEP" ile eşleşmezdi. KHGM indirmesi geçici ada yapılıp bitince taşınır; yarım
+indirme önbelleğe yerleşmez, bozuk önbellek kendini silip yeniden indirme ister.
 
 ### Referanslar
 
@@ -103,23 +110,20 @@ kullanılır. Promptları `references/ajan-sablonu.md`'den gelir.
 
 ## 7. Doğrulama
 
-Skill'de bir değişiklik yapıldığında koşturulacak kontroller:
+Skill'de bir değişiklik yapıldığında tek komut yeter:
 
 ```bash
-# 1. Kadro: 88 birim / 127 kadro dönmeli
-python -B scripts/dhyuzmani_kadro.py "<proje>/output/csv" --json /tmp/kadro.json
-
-# 2. Mesafe: KGM resmî değerleriyle karşılaştır
-python -B scripts/dhyuzmani_mesafe.py --birim "X" --il ADANA          # 196 km
-python -B scripts/dhyuzmani_mesafe.py --birim "X" --il GAZİANTEP      # 194 km
-python -B scripts/dhyuzmani_mesafe.py --birim "X" --il KAHRAMANMARAŞ  # 176 km
-
-# 3. Yatak: 88/88 dolu olmalı
-python -B scripts/dhyuzmani_yatak.py --json /tmp/mesafe.json --cikti /tmp/yatak.json
-
-# 4. Excel: 88 satır, Türkçe karakterler bozulmamış
-python -B scripts/dhyuzmani_excel.py --json /tmp/yatak.json --cikti /tmp/test.xlsx
+cd scripts
+python -B dhyuzmani_dogrula.py "<proje>/output/csv"   # CSV klasörü verilmezse yerel kontroller koşar
 ```
+
+Denetlenenler: KGM doğrulama değerleri (Adana 196, Gaziantep 194, K.Maraş 176, Osmaniye 127,
+Kilis 146, Urfa 333, İstanbul 1147), küçük harfli il sorgusu (TR upper), ilçe ofsetlerinin
+bütünlüğü (46 kayıt), yatak haritası (88 kayıt, null yok, **4 web düzeltmesi yerinde**),
+kadro 88/127 ve kadro↔harita evren eşitliği. Çıkış kodu 0 = hepsi geçti.
+
+Zincirin uçtan uca testi (Excel dahil) hâlâ elle yapılabilir — dört script sırayla
+scratchpad'e koşturulur; 88 satırlı, Türkçe karakterleri bozulmamış `.xlsx` beklenir.
 
 ## 8. Senkron
 

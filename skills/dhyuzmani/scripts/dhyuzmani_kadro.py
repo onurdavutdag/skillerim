@@ -24,6 +24,13 @@ sys.stdout.reconfigure(encoding="utf-8")
 
 VARSAYILAN_BRANS = "BEYİN VE SİNİR CERRAHİSİ"
 
+# Türkçe büyük harf: ASCII upper() 'i'yi 'I' yapar, "beyin" -> "BEYIN" tutmaz
+TR_BUYUK = str.maketrans("iıüöçşğ", "İIÜÖÇŞĞ")
+
+
+def buyuk(s):
+    return s.translate(TR_BUYUK).upper()
+
 # OCR kuyruk artıklarını temizlemek için bilinen birim son ekleri
 SON_EKLER = (
     "DEVLET HASTANESİ", "ARAŞTIRMA HASTANESİ", "ŞEHİR HASTANESİ",
@@ -63,7 +70,7 @@ def kadrolari_topla(csv_klasoru, brans=VARSAYILAN_BRANS):
         donem = os.path.basename(yol).split(" ")[0]
         with open(yol, encoding="utf-8-sig") as f:
             for satir in csv.DictReader(f):
-                if satir.get("brans", "").strip().upper() != brans.upper():
+                if buyuk(satir.get("brans", "").strip()) != buyuk(brans):
                     continue
                 birim = birim_normalize(satir["birim_adi"])
                 kayit = birimler[birim]

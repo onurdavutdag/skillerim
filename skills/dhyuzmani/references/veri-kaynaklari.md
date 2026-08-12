@@ -78,6 +78,11 @@ Türetilmiş 88 birimlik eşleşme `assets/yatak_map.json` içindedir; script ö
   | Erzurum Şehir H. | 1670 | AA, 2020 |
   | Kahramanmaraş DH | 400 | Valilik, Şubat 2025 |
 
+  ⚠️ **12.08.2026 mutabakatı:** haritanın bu dört değerden saptığı görüldü (Defne 50,
+  Gaziantep ŞH 365, Erzurum ŞH 1570, K.Maraş DH 1055 — sonuncusu Necip Fazıl tescilinin
+  bulanık-eşleşme kopyası). Değerler bu tabloya eşitlendi; sapma bir daha sessiz kalmasın
+  diye `dhyuzmani_dogrula.py` bu dört kaydı her koşuda denetler.
+
 - Kurum adları listede "T.C. Sağlık Bakanlığı ..." önekiyle ve **ilçe adıyla** geçer ("Kahta Devlet Hastanesi"), kura listesinde ise il önekiyle ("ADIYAMAN KAHTA DEVLET HASTANESİ"). Eşleştirme bu yüzden bulanık (fuzzy) + ilçe ipucu ile yapılır.
 
 ---
@@ -109,6 +114,10 @@ KGM cetvelinde bazı iller parantezli: `KOCAELİ (İZMİT)`, `SAKARYA (ADAPAZARI
 ## 5. Kadro verisi (yerel)
 
 120–129. dönem kura sonuçları `Mart 2027 atama/output/csv/1XX DHY Sonuclar *.csv` içindedir (noter onaylı taramaların OCR çıktısı). Beyin ve Sinir Cerrahisi: **127 kadro / 88 benzersiz birim**.
+
+Projenin bilinen tam yolu (her çalıştırmada aranmasın diye):
+`C:\Users\onurd\OneDrive\1) My Files\2) Kişisel\Mart 2027 atama\output\csv`
+Taşınmışsa `1[0-9][0-9] DHY*` desenli dosyalar aranarak yeniden bulunur ve bu satır güncellenir.
 
 ⚠️ **Bu CSV'ler binlerce hekimin ad-soyadını içerir.** Skill deposuna kopyalanmaz, uzak depoya gönderilmez, artifact'e basılmaz. `dhyuzmani_kadro.py` onları yalnız okur ve hastane düzeyinde toplu çıktı üretir.
 

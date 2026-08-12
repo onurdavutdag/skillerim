@@ -29,6 +29,14 @@ ILCE_JSON = os.path.join(ASSETS, "ilce_mesafe.json")
 
 VARSAYILAN_REFERANS = "HATAY"
 
+# Türkçe büyük harf: ASCII upper() 'i'yi 'I' yapar, KGM'deki 'GAZİANTEP' tutmaz
+TR_BUYUK = str.maketrans("iıüöçşğ", "İIÜÖÇŞĞ")
+
+
+def buyuk(s):
+    return s.translate(TR_BUYUK).upper()
+
+
 # KGM cetvelindeki başlıklar bazı iller için parantezli yazılır
 KGM_AD_ESLEME = {
     "KOCAELİ": "KOCAELİ (İZMİT)",
@@ -48,12 +56,12 @@ def kgm_yukle():
     for satir in satirlar[2:]:
         if not satir[1]:
             continue
-        il = str(satir[1]).strip().upper()
+        il = buyuk(str(satir[1]).strip())
         tablo[il] = {}
         for j, hedef in enumerate(basliklar):
             deger = satir[2 + j]
             if isinstance(deger, (int, float)):
-                tablo[il][str(hedef).strip().upper()] = int(deger)
+                tablo[il][buyuk(str(hedef).strip())] = int(deger)
     return tablo
 
 
@@ -63,7 +71,7 @@ def ilce_yukle():
 
 
 def il_kgm_adi(il):
-    il = il.strip().upper()
+    il = buyuk(il.strip())
     return KGM_AD_ESLEME.get(il, il)
 
 

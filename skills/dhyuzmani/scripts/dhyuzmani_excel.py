@@ -26,6 +26,14 @@ from openpyxl.utils import get_column_letter
 
 sys.stdout.reconfigure(encoding="utf-8")
 
+# Türkçe büyük harf: ASCII upper() 'i'yi 'I' yapar, "istanbul" vurgusu tutmaz
+TR_BUYUK = str.maketrans("iıüöçşğ", "İIÜÖÇŞĞ")
+
+
+def buyuk(s):
+    return s.translate(TR_BUYUK).upper()
+
+
 BASLIKLAR = ["#", "Birim", "İl", "Karayolu (km)", "Yaklaşık mı", "Yatak",
              "Uzman", "Ameliyathane", "Dönemler", "Kadro", "Genel Kura", "Not"]
 GENISLIK = {1: 5, 2: 58, 3: 16, 4: 13, 5: 10, 6: 8, 7: 8, 8: 13, 9: 26, 10: 7, 11: 11, 12: 50}
@@ -74,7 +82,7 @@ def excel_yaz(kayitlar, cikti, referans, tarama_dosyasi=None):
     for satir in ws.iter_rows(min_row=2):
         for hucre in satir:
             hucre.border = kenar
-        if satir[2].value == referans.upper():
+        if satir[2].value == buyuk(referans):
             for hucre in satir:
                 hucre.fill = vurgu
 
