@@ -1,0 +1,370 @@
+{
+ "HATAY EĞİTİM VE ARAŞTIRMA HASTANESİ": {
+  "il": "HATAY",
+  "hatay_km": 0,
+  "il_merkezi_km": 0,
+  "ofset_hatay": 0,
+  "ilce_il_km": 0,
+  "not": "Antakya"
+ },
+ "HATAY DEFNE DEVLET HASTANESİ": {
+  "il": "HATAY",
+  "hatay_km": 7,
+  "il_merkezi_km": 0,
+  "ofset_hatay": 7,
+  "ilce_il_km": 7,
+  "not": "Defne"
+ },
+ "HATAY SAMANDAĞ DEVLET HASTANESİ": {
+  "il": "HATAY",
+  "hatay_km": 27,
+  "il_merkezi_km": 0,
+  "ofset_hatay": 27,
+  "ilce_il_km": 27,
+  "not": "Samandağ"
+ },
+ "HATAY REYHANLI DEVLET HASTANESİ": {
+  "il": "HATAY",
+  "hatay_km": 44,
+  "il_merkezi_km": 0,
+  "ofset_hatay": 44,
+  "ilce_il_km": 44,
+  "not": "Reyhanlı"
+ },
+ "OSMANİYE DÜZİÇİ DEVLET HASTANESİ": {
+  "il": "OSMANİYE",
+  "hatay_km": 160,
+  "il_merkezi_km": 127,
+  "ofset_hatay": 33,
+  "ilce_il_km": 33,
+  "not": "Osmaniye+33"
+ },
+ "OSMANİYE KADİRLİ DEVLET HASTANESİ": {
+  "il": "OSMANİYE",
+  "hatay_km": 170,
+  "il_merkezi_km": 127,
+  "ofset_hatay": 43,
+  "ilce_il_km": 43,
+  "not": "Osmaniye+43"
+ },
+ "GAZİANTEP NİZİP DEVLET HASTANESİ": {
+  "il": "GAZİANTEP",
+  "hatay_km": 238,
+  "il_merkezi_km": 194,
+  "ofset_hatay": 44,
+  "ilce_il_km": 44,
+  "not": "G.Antep+44, Urfa yönü"
+ },
+ "KAHRAMANMARAŞ PAZARCIK DEVLET HASTANESİ": {
+  "il": "KAHRAMANMARAŞ",
+  "hatay_km": 222,
+  "il_merkezi_km": 176,
+  "ofset_hatay": 46,
+  "ilce_il_km": 46,
+  "not": "K.Maraş+46, G.Antep yönü"
+ },
+ "KAHRAMANMARAŞ GÖKSUN DEVLET HASTANESİ": {
+  "il": "KAHRAMANMARAŞ",
+  "hatay_km": 266,
+  "il_merkezi_km": 176,
+  "ofset_hatay": 90,
+  "ilce_il_km": 90,
+  "not": "K.Maraş+90"
+ },
+ "KAHRAMANMARAŞ AFŞİN DEVLET HASTANESİ": {
+  "il": "KAHRAMANMARAŞ",
+  "hatay_km": 318,
+  "il_merkezi_km": 176,
+  "ofset_hatay": 142,
+  "ilce_il_km": 142,
+  "not": "K.Maraş+142"
+ },
+ "KAHRAMANMARAŞ ELBİSTAN DEVLET HASTANESİ": {
+  "il": "KAHRAMANMARAŞ",
+  "hatay_km": 334,
+  "il_merkezi_km": 176,
+  "ofset_hatay": 158,
+  "ilce_il_km": 158,
+  "not": "K.Maraş+158"
+ },
+ "ADIYAMAN KAHTA DEVLET HASTANESİ": {
+  "il": "ADIYAMAN",
+  "hatay_km": 351,
+  "il_merkezi_km": 316,
+  "ofset_hatay": 35,
+  "ilce_il_km": 35,
+  "not": "Adıyaman+35"
+ },
+ "ŞANLIURFA BİRECİK DEVLET HASTANESİ": {
+  "il": "ŞANLIURFA",
+  "hatay_km": 251,
+  "il_merkezi_km": 333,
+  "ofset_hatay": -82,
+  "ilce_il_km": 82,
+  "not": "Urfa yolu üstü, Urfa-82"
+ },
+ "ŞANLIURFA SİVEREK DEVLET HASTANESİ": {
+  "il": "ŞANLIURFA",
+  "hatay_km": 429,
+  "il_merkezi_km": 333,
+  "ofset_hatay": 96,
+  "ilce_il_km": 96,
+  "not": "Urfa+96, D.bakır yönü"
+ },
+ "KONYA BEYŞEHİR DEVLET HASTANESİ": {
+  "il": "KONYA",
+  "hatay_km": 643,
+  "il_merkezi_km": 553,
+  "ofset_hatay": 90,
+  "ilce_il_km": 90,
+  "not": "Konya+90"
+ },
+ "BURDUR BUCAK DEVLET HASTANESİ": {
+  "il": "BURDUR",
+  "hatay_km": 797,
+  "il_merkezi_km": 843,
+  "ofset_hatay": -46,
+  "ilce_il_km": 46,
+  "not": "Burdur-46, Antalya yönü"
+ },
+ "YOZGAT SORGUN DEVLET HASTANESİ": {
+  "il": "YOZGAT",
+  "hatay_km": 592,
+  "il_merkezi_km": 626,
+  "ofset_hatay": -34,
+  "ilce_il_km": 34,
+  "not": "Yozgat-34, Sivas yönü"
+ },
+ "TOKAT ZİLE DEVLET HASTANESİ": {
+  "il": "TOKAT",
+  "hatay_km": 631,
+  "il_merkezi_km": 564,
+  "ofset_hatay": 67,
+  "ilce_il_km": 67,
+  "not": "Tokat+67"
+ },
+ "TOKAT TURHAL DEVLET HASTANESİ": {
+  "il": "TOKAT",
+  "hatay_km": 611,
+  "il_merkezi_km": 564,
+  "ofset_hatay": 47,
+  "ilce_il_km": 47,
+  "not": "Tokat+47"
+ },
+ "SİNOP BOYABAT 75 YIL DEVLET HASTANESİ": {
+  "il": "SİNOP",
+  "hatay_km": 833,
+  "il_merkezi_km": 927,
+  "ofset_hatay": -94,
+  "ilce_il_km": 94,
+  "not": "Sinop-94"
+ },
+ "DİYARBAKIR ERGANİ DEVLET HASTANESİ": {
+  "il": "DİYARBAKIR",
+  "hatay_km": 460,
+  "il_merkezi_km": 515,
+  "ofset_hatay": -55,
+  "ilce_il_km": 55,
+  "not": "D.bakır-55, Elazığ yönü"
+ },
+ "DİYARBAKIR SİLVAN DR.YUSUF AZİZOĞLU DEVLET HASTANESİ": {
+  "il": "DİYARBAKIR",
+  "hatay_km": 596,
+  "il_merkezi_km": 515,
+  "ofset_hatay": 81,
+  "ilce_il_km": 81,
+  "not": "D.bakır+81"
+ },
+ "DİYARBAKIR BİSMİL DEVLET HASTANESİ": {
+  "il": "DİYARBAKIR",
+  "hatay_km": 568,
+  "il_merkezi_km": 515,
+  "ofset_hatay": 53,
+  "ilce_il_km": 53,
+  "not": "D.bakır+53"
+ },
+ "MARDİN KIZILTEPE DEVLET HASTANESİ": {
+  "il": "MARDİN",
+  "hatay_km": 506,
+  "il_merkezi_km": 527,
+  "ofset_hatay": -21,
+  "ilce_il_km": 21,
+  "not": "Mardin-21, Urfa yönü"
+ },
+ "MARDİN NUSAYBİN DEVLET HASTANESİ": {
+  "il": "MARDİN",
+  "hatay_km": 582,
+  "il_merkezi_km": 527,
+  "ofset_hatay": 55,
+  "ilce_il_km": 55,
+  "not": "Mardin+55"
+ },
+ "MARDİN MİDYAT DEVLET HASTANESİ": {
+  "il": "MARDİN",
+  "hatay_km": 592,
+  "il_merkezi_km": 527,
+  "ofset_hatay": 65,
+  "ilce_il_km": 65,
+  "not": "Mardin+65"
+ },
+ "ŞIRNAK CİZRE DR. SELAHATTİN CİZRELİOĞLU DEVLET HASTANESİ": {
+  "il": "ŞIRNAK",
+  "hatay_km": 652,
+  "il_merkezi_km": 697,
+  "ofset_hatay": -45,
+  "ilce_il_km": 45,
+  "not": "Şırnak yolu üstü"
+ },
+ "ŞIRNAK SİLOPİ DEVLET HASTANESİ": {
+  "il": "ŞIRNAK",
+  "hatay_km": 679,
+  "il_merkezi_km": 697,
+  "ofset_hatay": -18,
+  "ilce_il_km": 18,
+  "not": "Cizre+27"
+ },
+ "ŞIRNAK İDİL DEVLET HASTANESİ": {
+  "il": "ŞIRNAK",
+  "hatay_km": 625,
+  "il_merkezi_km": 697,
+  "ofset_hatay": -72,
+  "ilce_il_km": 72,
+  "not": "Cizre-27, Midyat yönü"
+ },
+ "BİTLİS TATVAN DEVLET HASTANESİ": {
+  "il": "BİTLİS",
+  "hatay_km": 696,
+  "il_merkezi_km": 719,
+  "ofset_hatay": -23,
+  "ilce_il_km": 23,
+  "not": "Bitlis-23, Muş yönü"
+ },
+ "VAN ERCİŞ ŞEHİT RIDVAN ÇEVİK DEVLET HASTANESİ": {
+  "il": "VAN",
+  "hatay_km": 872,
+  "il_merkezi_km": 878,
+  "ofset_hatay": -6,
+  "ilce_il_km": 6,
+  "not": "Erciş, Patnos rotası"
+ },
+ "AĞRI PATNOS DEVLET HASTANESİ": {
+  "il": "AĞRI",
+  "hatay_km": 837,
+  "il_merkezi_km": 956,
+  "ofset_hatay": -119,
+  "ilce_il_km": 119,
+  "not": "Erciş yolu, Ağrı-119"
+ },
+ "AĞRI DOĞUBAYAZIT DR.YAŞAR ERYILMAZ DEVLET HASTANESİ": {
+  "il": "AĞRI",
+  "hatay_km": 1049,
+  "il_merkezi_km": 956,
+  "ofset_hatay": 93,
+  "ilce_il_km": 93,
+  "not": "Ağrı+93"
+ },
+ "HAKKARİ YÜKSEKOVA DEVLET HASTANESİ": {
+  "il": "HAKKARİ",
+  "hatay_km": 964,
+  "il_merkezi_km": 886,
+  "ofset_hatay": 78,
+  "ilce_il_km": 78,
+  "not": "Hakkari+78"
+ },
+ "ORDU ÜNYE DEVLET HASTANESİ": {
+  "il": "ORDU",
+  "hatay_km": 703,
+  "il_merkezi_km": 779,
+  "ofset_hatay": -76,
+  "ilce_il_km": 76,
+  "not": "Ordu-76, Samsun yönü"
+ },
+ "RİZE KAÇKAR DEVLET HASTANESİ": {
+  "il": "RİZE",
+  "hatay_km": 1019,
+  "il_merkezi_km": 982,
+  "ofset_hatay": 37,
+  "ilce_il_km": 37,
+  "not": "Pazar, Rize+37"
+ },
+ "ARTVİN HOPA DEVLET HASTANESİ": {
+  "il": "ARTVİN",
+  "hatay_km": 1048,
+  "il_merkezi_km": 980,
+  "ofset_hatay": 68,
+  "ilce_il_km": 68,
+  "not": "Rize+66, sahil"
+ },
+ "ZONGULDAK ÇAYCUMA DEVLET HASTANESİ": {
+  "il": "ZONGULDAK",
+  "hatay_km": 923,
+  "il_merkezi_km": 960,
+  "ofset_hatay": -37,
+  "ilce_il_km": 37,
+  "not": "Zonguldak-37, Karabük yönü"
+ },
+ "KOCAELİ GÖLCÜK NECATİ ÇELİK DEVLET HASTANESİ": {
+  "il": "KOCAELİ",
+  "hatay_km": 1056,
+  "il_merkezi_km": 1036,
+  "ofset_hatay": 20,
+  "ilce_il_km": 20,
+  "not": "İzmit+20"
+ },
+ "KÜTAHYA GEDİZ DEVLET HASTANESİ": {
+  "il": "KÜTAHYA",
+  "hatay_km": 911,
+  "il_merkezi_km": 871,
+  "ofset_hatay": 40,
+  "ilce_il_km": 40,
+  "not": "Kütahya+40? Uşak rotası"
+ },
+ "AYDIN NAZİLLİ DEVLET HASTANESİ": {
+  "il": "AYDIN",
+  "hatay_km": 1030,
+  "il_merkezi_km": 1075,
+  "ofset_hatay": -45,
+  "ilce_il_km": 45,
+  "not": "Aydın-45, Denizli yönü"
+ },
+ "MUĞLA BODRUM DEVLET HASTANESİ": {
+  "il": "MUĞLA",
+  "hatay_km": 1160,
+  "il_merkezi_km": 1055,
+  "ofset_hatay": 105,
+  "ilce_il_km": 105,
+  "not": "Muğla+105"
+ },
+ "BALIKESİR AYVALIK DEVLET HASTANESİ": {
+  "il": "BALIKESİR",
+  "hatay_km": 1188,
+  "il_merkezi_km": 1098,
+  "ofset_hatay": 90,
+  "ilce_il_km": 90,
+  "not": "Balıkesir+90? İzmir rotası"
+ },
+ "TEKİRDAĞ ÇERKEZKÖY DEVLET HASTANESİ": {
+  "il": "TEKİRDAĞ",
+  "hatay_km": 1229,
+  "il_merkezi_km": 1278,
+  "ofset_hatay": -49,
+  "ilce_il_km": 49,
+  "not": "Tekirdağ-49, İstanbul yönü"
+ },
+ "İSTANBUL ARNAVUTKÖY DEVLET HASTANESİ": {
+  "il": "İSTANBUL",
+  "hatay_km": 1181,
+  "il_merkezi_km": 1147,
+  "ofset_hatay": 34,
+  "ilce_il_km": 34,
+  "not": "İstanbul+34, Avrupa yakası"
+ },
+ "İSTANBUL ÇATALCA İLYAS ÇOKAY DEVLET HASTANESİ": {
+  "il": "İSTANBUL",
+  "hatay_km": 1199,
+  "il_merkezi_km": 1147,
+  "ofset_hatay": 52,
+  "ilce_il_km": 52,
+  "not": "İstanbul+52"
+ }
+}
