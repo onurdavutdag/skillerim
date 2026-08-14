@@ -117,13 +117,18 @@ https://www.hepsiemlak.com/<konum>-satilik/daire?page=<N>
 https://www.emlakjet.com/satilik-daire/<konum>?sayfa=<N>
 ```
 
-- Hatay: **169 ilan** (üç site içinde en küçük envanter)
-- Kart sarmalayıcı `.listing-row-card-media` — sayfada 30 adet, ama **ayrıştırma 10'unda çalıştı**.
-  Sebep doğrulanmadı: ya yanlış katman (metin kardeş elemanda) ya tembel yükleme.
-  Ajanın ilk işi sayfayı sona kaydırıp yeniden ölçmek.
-- Alanlar tek satırda `·` ile ayrık: `3+1 · 110 m² · 4. Kat · 14.08.2026`; konum `"Hatay, Arsuz"`;
-  fiyat `₺` içeren satır; ilan kimliği `a[href*="/ilan/"]` yolunun sonundaki sayı
-- **Bina yaşı listede YOK** (doğrulandı)
+- Hatay: **169 ilan** (üç site içinde en küçük envanter), sayfa başına 30 kart
+- Kart sarmalayıcı `.listing-row-card-media` — **30/30 ayrışıyor** (doğru okuma yöntemiyle)
+- ⛔ **`innerText` kullanılmaz — 30 karttan 20'sinde boş döner.** `textContent` 30/30 dolu.
+  Kartlar görünür (`display:flex`, `offsetHeight:168`) ve sayfayı sona kaydırmak hiçbir şeyi
+  değiştirmiyor — **tembel yükleme değil**. İlk ölçümde "10/30 ayrıştı" sanılmasının sebebi buydu;
+  sarmalayıcı baştan beri doğruymuş.
+- `textContent` de satır sonu vermez, alanlar yapışır. Çözüm **metin bölmek değil, eleman okumak**:
+  başlık = `a[href*="/ilan/"]` bağları içinde metni **en uzun** olan (ilki rozet olabiliyor),
+  konum = karttaki `p`, nitelikler = `span`'ler (`·` atılır, kalanlar **kalıba göre** eşlenir:
+  `^\d+\+\d+$` oda, `m²` alan, `Kat` kat, `\d{2}\.\d{2}\.\d{4}` tarih, `₺` fiyat).
+  Kalıp eşleme sırayla eşlemeden güvenlidir — bir alan eksikse diğerleri kaymaz.
+- **Bina yaşı genel olarak YOK**; yalnız `"SIFIR BİNA"` rozeti varsa yaş = 0
 - ⚠️ **ÖLÇÜLMEDİ:** fiyat filtresi şeması, detay seçicileri, hız tavanı
 
 > **Kural:** ⚠️ etiketli hiçbir alan üretimde varsayılmaz. Ajan önce ölçer, ölçtüğünü kendi prompt

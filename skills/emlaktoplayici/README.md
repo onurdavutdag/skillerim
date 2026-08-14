@@ -94,7 +94,7 @@ Bu, skill'in çekirdek farkıdır: türedikleri iki tek seferlik script'te veri 
 |---|---|---|
 | `assets/hatay_ilce_hasar.json` | ~2 KB | Hatay 15 ilçe kesin hasar tespiti (yıkık/acil yıktırılacak/ağır) |
 | `assets/ilce_koordinat.json` | ~2 KB | Hatay ilçe merkez koordinatları |
-| `assets/tdth_renk_lut.json` | ~1 KB | TUCBS deprem tehlike haritası raster rengi → PGA çevrimi |
+| `assets/tdth_renk_lut.json` | ~2 KB | **Boş ve boş kalacak.** TUCBS WMS'in çalışan istek şablonunu ve PGA'nın neden alınamadığının kanıtını taşır (dönen değer PGA değil, kırmızı kanal baytı). Tekrar denenmesin diye kayıtta |
 | `assets/gem_diri_fay_tr.geojson` | ~1-3 MB | **Depoda tutulmaz** — ilk kullanımda GEM'den indirilip `~/.claude/.cache/emlaktoplayici/` altına önbelleklenir |
 
 ## 5. Alt ajanlar
@@ -119,7 +119,7 @@ oturumda bağlamda durur, ara sıra kullanılan bir skill için israftır. Adlar
 |---|---|---|
 | `emlaktoplayici-s-sahibinden` | **Tam** — arama yolu, sayfalama, kart seçici, liste alanları, **detay seçicileri (25 alan)** ve detay hız tavanı canlı ölçüldü | — |
 | `emlaktoplayici-s-hepsiemlak` | **Liste tarafı tam** — sayfalama (71 sayfa/1.704 ilan), tüm kart seçicileri ve **kesin bina yaşı** ölçüldü | Fiyat filtresi siteye uygulatılamıyor → eleme yerelde yapılır. Detay seçicileri ölçülmedi (gerekmiyor) |
-| `emlaktoplayici-s-emlakjet` | **Kısmi — üretime hazır değil** | Kart sarmalayıcı `.listing-row-card-media` 30 kartın **10'unu** ayrıştırıyor; sebep doğrulanmadı. Fiyat filtresi ve detay seçicileri ölçülmedi |
+| `emlaktoplayici-s-emlakjet` | **Liste tarafı tam** — `.listing-row-card-media` **30/30** ayrışıyor; ⛔ `innerText` bu sitede 20 kartta boş döner, eleman okumak şart | Fiyat filtresi ve detay seçicileri ölçülmedi. Bina yaşı yok (yalnız "SIFIR BİNA" rozeti) |
 
 Kısmi ajanların ilk işi kendi eksiklerini **arayüzden ölçmek** ve ölçtüklerini prompt dosyasına geri yazmaktır.
 

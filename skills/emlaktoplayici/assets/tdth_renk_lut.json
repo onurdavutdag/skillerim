@@ -1,24 +1,40 @@
 {
-  "_durum": "BOŞ — HENÜZ KURULMADI",
+  "_durum": "KURULAMAZ — kamuya açık yoldan PGA SAYISI alınamıyor (14.08.2026 kanıtlandı)",
+
   "_kaynak": {
-    "aciklama": "AFAD Türkiye Deprem Tehlike Haritası (TDTH) WMS servisi raster döndürür. GetFeatureInfo çağrısı PGA sayısı değil piksel RENGİ verir. Bu dosya rengi PGA'ya çeviren tablodur.",
-    "servis": "TUCBS açık WMS — trk_afad_tdth_wms, katman 58, GetFeatureInfo",
-    "giris_gerekiyor_mu": false,
-    "olcum_tarihi": null
+    "endpoint": "https://tucbs-public-api.csb.gov.tr/trk_afad_tdth_wms",
+    "katman": "58 = TSTH_PGA_475",
+    "bulunma_yolu": "ArcGIS web map item a5c56050d1c04403aa808e7482d2c378 -> operational layer URL",
+    "olcum_tarihi": "2026-08-14"
   },
 
-  "_nasil_kurulur": [
-    "1. WMS GetLegendGraphic çağrısıyla katman 58'in lejant görselini indir.",
-    "2. Lejanttaki her renk kutusunun RGB değerini ve yanındaki PGA aralığını oku.",
-    "3. Her girdiyi asagidaki 'tablo' dizisine {r, g, b, pga_min, pga_max} olarak yaz.",
-    "4. '_durum' alanını 'KURULDU' yap, '_kaynak.olcum_tarihi' alanına tarihi yaz.",
-    "5. Doğrulama: bilinen iki noktayı sorgula — Antakya merkez yüksek banda, Erzin düşük banda düşmeli."
+  "_calisan_istek": {
+    "not": "GetFeatureInfo BU BICIMDE calisiyor. Iki tuzak var: parametre adlari BUYUK HARF olmali ve STYLES parametresi ZORUNLU (bos deger yeterli). STYLES yoksa HTTP 400 + 'Parameter STYLES is required!' doner. INFO_FORMAT=application/json calisir; text/plain ServiceException verir.",
+    "sablon": "{endpoint}?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&LAYERS=58&QUERY_LAYERS=58&STYLES=&CRS=CRS:84&BBOX={lon0},{lat0},{lon1},{lat1}&WIDTH=3&HEIGHT=3&I=1&J=1&FORMAT=image%2Fpng&INFO_FORMAT=application%2Fjson",
+    "ornek_cevap": {
+      "layers": [{ "id": "TSTH_PGA_475", "features": [{ "id": "ELEVATION", "results": [
+        { "key": "ELEVATION", "value": "207.0" }, { "key": "UNIT", "value": "RED]" }
+      ]}]}]
+    }
+  },
+
+  "_neden_kullanilamiyor": {
+    "bulgu": "Donen ELEVATION degeri PGA DEGIL, rasterin KIRMIZI KANAL baytidir. UNIT alani da bunu soyluyor: 'RED]'.",
+    "kanit": "Antakya (yuksek tehlike) -> 207.0 · Erzin (dusuk tehlike) -> 255.0. Dusuk tehlikeli ilce DAHA YUKSEK deger donduruyor. Tipik tehlike renk rampasinda dusuk = parlak sari (R=255), yuksek = koyu kirmizi (R<255). Yani tek kanal PGA ile ters ve TEK BASINA GERI CEVRILEMEZ: iki farkli PGA ayni R degerini verebilir.",
+    "eksik": "Servis yalniz bir bant donduruyor; G ve B alinamiyor. Uc kanal alinsa bile renk->PGA etiket eslesmesi lejanttan gelmeliydi.",
+    "lejant": "GetLegendGraphic denendi -> WAF 'Request Rejected'. Lejant alinamiyor.",
+    "resmi_yol": "AFAD'in koordinatla kesin deger veren sorgusu (tdth.afad.gov.tr) e-Devlet girisi istiyor. Anonim sayisal API YOK."
+  },
+
+  "_karar": "PGA bileseni BOS birakilir. emlaktoplayici_depremskorla.py bu bileseni hesaplamaz, skoru kalan bilesenlerin azamisine gore olcekler ve '(N/6 bilesen)' guvenini bir eksik yazar. Renk okuyup PGA UYDURULMAZ - ters ve cok-degerli bir esleme, hesaplanmamis bir degerden daha zararlidir.",
+
+  "_yeniden_denemek_isteyen_icin": [
+    "Bu yol KAPALI, tekrar denemeden once yeni bir sey degismis olmali.",
+    "Acilabilecek tek kapi: AFAD'in TBDY-2018 parametrelerini anonim donduren bir servis yayinlamasi.",
+    "GetMap ile 1x1 karo cekip canvas'tan RGB okumak teknik olarak mumkun ama LEJANT olmadan renk->PGA etiketi kurulamaz; lejant WAF arkasinda.",
+    "Alternatif veri kaynagi: GEM/USGS kuresel tehlike modelleri (farkli model, TBDY ile ayni sayiyi vermez - kullanilirsa kaynak kunyesi degistirilmeli)."
   ],
 
-  "_kural": "Tablo boşken emlaktoplayici_depremskorla.py sismik tehlike bileşenini BOŞ bırakır — sıfır yazmaz, tahmin etmez, ortalamayla doldurmaz. Skorun yanındaki '(N/6 bileşen)' güveni bir eksilir. Bu bilinçli bir tercihtir: uydurulmuş bir PGA, hesaplanmamış bir PGA'dan daha zararlıdır.",
-
   "eslesme_toleransi": 12,
-  "_eslesme_toleransi_not": "Raster JPEG sıkıştırması yüzünden piksel rengi lejant renginden birkaç birim sapabilir. Öklit RGB uzaklığı bu toleransın altındaysa eşleşme sayılır; üstündeyse bileşen yine BOŞ kalır.",
-
   "tablo": []
 }

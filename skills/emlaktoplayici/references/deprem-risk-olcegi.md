@@ -79,14 +79,9 @@ GEM **Global Active Faults** veri setinin Türkiye kırpması (Emre vd. TR veris
 
 GeoJSON depoda tutulmaz; ilk kullanımda indirilip `~/.claude/.cache/emlaktoplayici/` altına önbelleklenir.
 
-### 1.4 Sismik tehlike, PGA-475 (0-1,5)
+### 1.4 Sismik tehlike, PGA-475 (0-1,5) — ⛔ HESAPLANAMIYOR
 
-AFAD Türkiye Deprem Tehlike Haritası, TUCBS açık WMS servisi
-(`trk_afad_tdth_wms`, katman 58), `GetFeatureInfo` çağrısı. Giriş/anahtar gerektirmez.
-
-⚠️ **Servis raster döner, sayı değil** — `GetFeatureInfo` piksel **rengini** verir. Renk→PGA çevrimi
-`assets/tdth_renk_lut.json` tablosundan yapılır. Tablo bir kez lejanttan kurulur; kurulana kadar bu
-bileşen **boş** kalır (sıfır değil — boş).
+Puanlama tablosu tasarlandı ama **besleyecek veri kamuya açık yoldan alınamıyor**. Bileşen boş kalır.
 
 | PGA (g) | Puan |
 |---|:---:|
@@ -94,6 +89,28 @@ bileşen **boş** kalır (sıfır değil — boş).
 | 0,4-0,6 | **1,0** |
 | 0,2-0,4 | **0,5** |
 | <0,2 | **0** |
+
+**14.08.2026'da ne denendi, ne çıktı** (tekrar denenmesin diye kayıtta):
+
+1. TUCBS WMS endpoint'i bulundu: `https://tucbs-public-api.csb.gov.tr/trk_afad_tdth_wms`,
+   katman **58 = `TSTH_PGA_475`**.
+2. `GetFeatureInfo` **çalıştırıldı**. İki tuzağı var: parametre adları **BÜYÜK HARF** olmalı ve
+   **`STYLES=` zorunlu** (boş değer yeterli) — yoksa HTTP 400 `Parameter "STYLES" is required!`.
+   `INFO_FORMAT=application/json` çalışıyor, `text/plain` ServiceException veriyor.
+   Tam çalışan istek şablonu `assets/tdth_renk_lut.json` → `_calisan_istek`'te.
+3. **Ama dönen değer PGA değil, rasterin KIRMIZI KANAL baytı.** Cevaptaki `UNIT` alanı bunu
+   açıkça söylüyor: `"RED]"`.
+4. **Kanıt:** Antakya (yüksek tehlike) → **207,0**; Erzin (düşük tehlike) → **255,0**.
+   Düşük tehlikeli ilçe daha yüksek değer döndürüyor. Tehlike renk rampasında düşük = parlak sarı
+   (R=255), yüksek = koyu kırmızı (R<255). Yani tek kanal PGA ile **ters** ve tek başına
+   **geri çevrilemez** — iki farklı PGA aynı R'yi verebilir. Servis G ve B bantlarını vermiyor.
+5. `GetLegendGraphic` ile renk→etiket tablosu kurulmak istendi → **WAF "Request Rejected"**.
+6. AFAD'ın koordinatla **kesin değer** veren resmî sorgusu (`tdth.afad.gov.tr`) **e-Devlet girişi**
+   istiyor. Anonim sayısal API **yok**.
+
+> **Sonuç:** bu bileşen boş bırakılır ve skor kalan bileşenlerin azamisine göre ölçeklenir;
+> güven `(N/6)` bir eksik yazar. Renk okuyup PGA **uydurulmaz** — ters ve çok-değerli bir eşleme,
+> hesaplanmamış bir değerden daha zararlıdır.
 
 ### 1.5 Kat sayısı (0-1)
 

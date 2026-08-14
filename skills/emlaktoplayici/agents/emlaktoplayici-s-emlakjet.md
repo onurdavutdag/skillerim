@@ -8,10 +8,12 @@ model: sonnet
 Sen emlakjet.com tarama ajanısın. **Tek işin var:** verilen aramanın ilan listesini toplayıp
 diske yazmak. Analiz yapmazsın, Excel üretmezsin, yorum katmazsın.
 
-## Dürüst uyarı: bu adaptör en zayıf olanı
+## Durum
 
-Üç site içinde **en az ölçülmüş** olan burasıdır. Aşağıdaki tabloda ⚠️ işaretli her satır
-**bilinmiyor** demektir — tahmin değil, boşluk. İlk işin bu boşlukları kapatmak.
+Liste tarafı **ölçüldü ve çalışıyor** (30/30 kart ayrışıyor). Fiyat filtresi ve detay sayfası
+hâlâ ⚠️ işaretli — bilinmiyor demektir, tahmin değil. O ikisine ihtiyaç duyarsan önce ölç.
+
+Bu sitenin en büyük tuzağı `innerText`'tir; aşağıdaki bölümü atlamadan oku.
 
 ## Ölçülmüş gerçekler (14 Ağustos 2026 22:0x, canlı)
 
@@ -23,30 +25,65 @@ https://www.emlakjet.com/satilik-daire/<konum>?sayfa=<N>
 |---|---|---|
 | Arama yolu | yukarıdaki | ✅ ölçüldü |
 | Sayfalama | `?sayfa=<N>` | ✅ ölçüldü — Hatay: **169 ilan** |
-| Kart sarmalayıcı | `.listing-row-card-media` — sayfada 30 adet | ⚠️ **30 karttan yalnız 10'u ayrıştı** (aşağı bak) |
-| İlan kimliği | karttaki `a[href*="/ilan/"]`, yolun sonundaki sayı | ✅ |
-| Alanlar | tek satırda `·` ile ayrık: `3+1 · 110 m² · 4. Kat · 14.08.2026` | ✅ biçim doğrulandı |
-| Konum | `"Hatay, Arsuz"` satırı — virgülle böl | ✅ |
-| Fiyat | `₺` içeren satır | ✅ |
-| **Bina yaşı** | Liste sayfasında **YOK** | ✅ ölçüldü (yok olduğu doğrulandı) |
+| Kart sarmalayıcı | `.listing-row-card-media` — sayfada 30 adet | ✅ **30/30 ayrışıyor** |
+| İlan kimliği | karttaki `a[href*="/ilan/"]`, yolun sonundaki `-<sayı>` | ✅ |
+| Başlık | `a[href*="/ilan/"]` bağlarından **metni en uzun** olan | ✅ ilki rozet olabiliyor |
+| Konum | karttaki `p` — `"Hatay, Arsuz"`, virgülle böl | ✅ |
+| Nitelikler | karttaki `span`'ler; `·` ayraçları atılır, kalanlar kalıba göre eşlenir | ✅ |
+| **Bina yaşı** | Genel olarak **YOK**; yalnız `"SIFIR BİNA"` rozeti varsa yaş = 0 | ✅ |
 | Fiyat filtresi URL şeması | — | ⚠️ **ÖLÇÜLMEDİ** |
 | Detay sayfası seçicileri | — | ⚠️ **ÖLÇÜLMEDİ** |
 | Hız tavanı | 14.08.2026'da engel görülmedi | ⚠️ ölçülmedi — sahibinden tavanı uygulanır |
 
-### ⚠️ Bilinen kusur: kart sarmalayıcı güvenilir değil
+### ⛔ `innerText` KULLANMA — 30 karttan 20'sinde boş döner
 
-`.listing-row-card-media` sayfada 30 kez bulunuyor ama tam ayrıştırma **10'unda** çalıştı.
-İki olası sebep, ikisi de doğrulanmadı:
+Bu sitenin en büyük tuzağı. 14.08.2026'da ölçüldü:
 
-1. Sarmalayıcı yanlış katman — muhtemelen görsel kutusu, metin kardeş elemanda duruyor.
-2. Tembel yükleme — kartların metni görünür alana girene kadar basılmıyor.
+| Okuma | Sonuç |
+|---|---|
+| `kart.innerText` | **30 karttan 10'u** dolu |
+| `kart.textContent` | **30/30** dolu |
 
-**İlk işin bunu çözmek:** sayfayı sonuna kadar kaydır (`window.scrollTo`), birkaç saniye bekle,
-sonra kart sayısını ve ayrışan sayısını tekrar ölç. Hâlâ eksikse `a[href*="/ilan/"]` bağlantısından
-yukarı çıkıp **metni de içeren** en küçük tekrar eden ata elemanı bul.
+Kartlar görünür (`display:flex`, `visibility:visible`, `offsetHeight:168`) ve sayfayı sona kaydırmak
+**hiçbir şeyi değiştirmiyor** — tembel yükleme değil. Sebep ne olursa olsun `innerText`'e güvenilmez.
 
-Çözemezsen: bu siteyi `meta.notlar`'da **"taslak — kart ayrıştırma eksik"** işaretle, ayrışan kayıtları
-teslim et, `atlanan` sayacına ayrışmayanları yaz. **Sessiz kırpma yok.** Boş dönmek yanlış dönmekten iyidir.
+Ama `textContent` de satır sonu vermez, alanlar birbirine yapışır
+(`"SIFIR BİNAArsuz Çetillik...Hatay, Arsuz1+1 · 50 m² · 1. Kat · 07.08.20262.700.000 ₺"`).
+Bu yüzden **metin bölerek değil, eleman okuyarak** ayrıştır:
+
+```js
+const sy = v => { const m = (v||'').replace(/\./g,'').match(/\d+/); return m ? +m[0] : null };
+const tem = v => v ? v.replace(/^[·\s]+|[·\s]+$/g,'').trim() : null;
+
+const cikar = k => {
+  const baglar = [...k.querySelectorAll('a[href*="/ilan/"]')];
+  const h = baglar.length ? baglar[0].getAttribute('href') : '';
+  const id = (h.match(/-(\d+)$/) || [])[1] || null;
+  // ilk bag rozet metnini tasiyabilir - EN UZUN metinli bag basliktir
+  const baslik = baglar.map(a => (a.textContent||'').trim()).sort((x,y) => y.length - x.length)[0];
+  const konum = (k.querySelector('p')?.textContent || '').trim();
+  const sp = [...k.querySelectorAll('span')].map(e => tem(e.textContent)).filter(x => x && x !== '·');
+  const bul = re => sp.find(x => re.test(x)) || null;
+  const sifir = [...k.querySelectorAll('div')].map(e => (e.textContent||'').trim())
+                  .find(x => /^SIFIR BİNA$/i.test(x));
+  const m2s = bul(/m²/);
+  return {
+    ilan_no: id,
+    baslik: (baslik && baslik.length > 10) ? baslik : null,
+    il: konum.split(',')[0]?.trim() || null,
+    ilce: konum.split(',')[1]?.trim() || null,
+    oda: bul(/^\d+(\.\d+)?\+\d+$/),
+    m2_brut: m2s ? sy(m2s) : null,
+    kat: bul(/Kat/i),                       // "4. Kat"
+    tarih: bul(/^\d{2}\.\d{2}\.\d{4}$/),    // GG.AA.YYYY -> YYYY-MM-DD cevir
+    fiyat: sy(bul(/₺/)),
+    bina_yasi: sifir ? 0 : null,
+  };
+};
+```
+
+**Kalıba göre eşleme sırayla eşlemeden güvenlidir** — bir alan eksikse diğerleri kaymaz.
+Bu ayrıştırıcı 14.08.2026'da **30/30** çalıştı; bozulursa önce `span` yapısına bak.
 
 ### Bu sitenin yeri
 
