@@ -92,26 +92,39 @@ https://www.sahibinden.com/<kategori>/<konum>?price_min=<n>&price_max=<n>&paging
 - Fiyat filtresi URL parametresiyle çalışır ✓
 - **Bina yaşı listede YOK** → detay gerekir (150 ilan ≈ 40 dk)
 
-### hepsiemlak — kısmen ölçüldü
+### hepsiemlak — ✅ liste tarafı tam ölçüldü (22:0x)
 
 ```
 https://www.hepsiemlak.com/<konum>-satilik/daire?page=<N>
 ```
 
-- Kart seçici: `article` (sınıfları `listingCard__*` deseninde)
-- Listede **bina yaşı var** ✓ — deprem skorunun en ağır bileşeni detaya inmeden elde edilir
-- ⚠️ **ÖLÇÜLMEDİ:** fiyat filtresi URL şeması. JS uygulaması, parametre tahminleri tutmadı —
-  ajan filtreyi **arayüzden** uygulayıp oluşan URL'i okumalı
-- ⚠️ **ÖLÇÜLMEDİ:** detay sayfası seçicileri ve hız tavanı
+- Hatay: **71 sayfa / 1.704 ilan / 25 kart** per sayfa
+- Kart `article`; alanlar `.listingCard__title`, `.listingCard__price`, `.listingCard__date`,
+  `.listingCard__location` (`"Hatay / Arsuz / Karaağaç Şarkonak Mah."`)
+- Nitelikler `.listingCard__spec-item` + `.listingCard__spec-label`:
+  `Kategori · Oda Sayısı · Brüt m² · Bina Yaşı · Kat`
+- **Bina yaşı KESİN gelir**: `"20 Yaşında"`, `"Sıfır Bina"` — sahibinden'in bandının aksine tam sayı.
+  Deprem skoru amaçsa bu site birinci tercihtir.
+- ⛔ **Fiyat filtresi URL'den uygulanamıyor.** `priceMin`/`priceMax` input adları var; URL parametresi
+  olarak verilince **kabul edilip yok sayılıyor** (toplam 1.704'te kalıyor). Sentetik `input`/`change`
+  olayı + "Ara" tıklaması da URL'i değiştirmedi.
+  → **Çözüm:** filtreyi siteye uygulatma; tüm sayfaları çek, elemeyi yerelde yap (71 sayfa ≈ 4 dk).
+- ⚠️ **ÖLÇÜLMEDİ:** detay sayfası seçicileri (bu site için gerekmiyor), hız tavanı
 
-### emlakjet — kısmen ölçüldü
+### emlakjet — kısmen ölçüldü (22:0x)
 
 ```
 https://www.emlakjet.com/satilik-daire/<konum>?sayfa=<N>
 ```
 
-- Kart seçici: `a[href*="/ilan/"]` — kısmen çalışıyor, kart gövdesine güvenilir bir sarmalayıcı bulunamadı
-- ⚠️ **ÖLÇÜLMEDİ:** liste sayfasındaki alanlar, fiyat filtresi şeması, detay seçicileri, hız tavanı
+- Hatay: **169 ilan** (üç site içinde en küçük envanter)
+- Kart sarmalayıcı `.listing-row-card-media` — sayfada 30 adet, ama **ayrıştırma 10'unda çalıştı**.
+  Sebep doğrulanmadı: ya yanlış katman (metin kardeş elemanda) ya tembel yükleme.
+  Ajanın ilk işi sayfayı sona kaydırıp yeniden ölçmek.
+- Alanlar tek satırda `·` ile ayrık: `3+1 · 110 m² · 4. Kat · 14.08.2026`; konum `"Hatay, Arsuz"`;
+  fiyat `₺` içeren satır; ilan kimliği `a[href*="/ilan/"]` yolunun sonundaki sayı
+- **Bina yaşı listede YOK** (doğrulandı)
+- ⚠️ **ÖLÇÜLMEDİ:** fiyat filtresi şeması, detay seçicileri, hız tavanı
 
 > **Kural:** ⚠️ etiketli hiçbir alan üretimde varsayılmaz. Ajan önce ölçer, ölçtüğünü kendi prompt
 > dosyasına geri yazar, sonra kullanır. Ölçemezse o siteyi "taslak" işaretler ve kısmi teslim eder.

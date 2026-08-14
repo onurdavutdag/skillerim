@@ -10,11 +10,16 @@ diske yazmak. Analiz yapmazsın, Excel üretmezsin, yorum katmazsın.
 
 ## Bu sitenin değeri
 
-**Bina yaşı liste sayfasında geliyor.** Deprem risk skorunun en ağır bileşeni (0-3,5) bina yaşıdır.
-sahibinden'de aynı bilgi ilan başına bir detay sayfası, yani 150 ilan için ~40 dakika demektir.
-Burada bedava. **Bina yaşını kaçırma — bu sitenin varlık sebebi budur.**
+**Bina yaşı liste sayfasında ve KESİN geliyor** — `"20 Yaşında"`, `"5 Yaşında"`, `"Sıfır Bina"`.
+Bant değil, tam sayı. Deprem risk skorunun en ağır bileşeni (0-3,5) bina yaşıdır ve:
 
-## Ölçülmüş gerçekler (14 Ağustos 2026)
+- **sahibinden** bu bilgiyi ancak detay sayfasında, üstelik **bant** olarak verir (`"11-15 arası"`) —
+  150 ilan için ~40 dakika ve sonuçta belirsiz bir değer.
+- **hepsiemlak** listede, kesin, bedava verir.
+
+Deprem skoru asıl amaçsa **önce bu site taranır**. Bina yaşını kaçırma — bu sitenin varlık sebebi budur.
+
+## Ölçülmüş gerçekler (14 Ağustos 2026 22:0x, canlı)
 
 ```
 https://www.hepsiemlak.com/<konum>-satilik/daire?page=<N>
@@ -22,26 +27,49 @@ https://www.hepsiemlak.com/<konum>-satilik/daire?page=<N>
 
 | Şey | Değer | Durum |
 |---|---|---|
-| Sayfalama | `?page=<N>` | ✅ ölçüldü |
-| Kart seçici | `article` (sınıfları `listingCard__*` deseninde) | ✅ ölçüldü |
-| Bina yaşı | Kart içinde | ✅ ölçüldü |
-| Fiyat filtresi URL şeması | — | ⚠️ **ÖLÇÜLMEDİ** |
-| Detay sayfası seçicileri | — | ⚠️ **ÖLÇÜLMEDİ** |
+| Sayfalama | `?page=<N>` | ✅ Hatay: **71 sayfa / 1.704 ilan / 25 kart** |
+| Kart seçici | `article` | ✅ sayfa başına 25 |
+| Başlık | `.listingCard__title` | ✅ |
+| Fiyat | `.listingCard__price` (yanında `.listingCard__currency`) | ✅ |
+| Tarih | `.listingCard__date` — `GG/AA/YYYY` | ✅ |
+| Konum | `.listingCard__location` — `"Hatay / Arsuz / Karaağaç Şarkonak Mah."` | ✅ `/` ile böl |
+| Nitelikler | `.listingCard__spec-item` içinde `.listingCard__spec-label` | ✅ 5 adet |
+| Nitelik anahtarları | `Kategori · Oda Sayısı · Brüt m² · Bina Yaşı · Kat` | ✅ |
+| Link | karttaki ilk `a[href]` — göreli yol | ✅ |
+| **Fiyat filtresi** | **URL'den uygulanamıyor** (aşağı bak) | ✅ ölçüldü, çözümü var |
+| Detay sayfası seçicileri | — | ⚠️ **ÖLÇÜLMEDİ** (bu site için gerekmiyor) |
 | Hız tavanı | 14.08.2026'da engel görülmedi | ⚠️ ölçülmedi — sahibinden tavanı uygulanır |
 
-## İLK İŞİN: eksikleri ölç
+### Nitelik ayıklama
 
-⚠️ etiketli hiçbir şeyi **varsayma**. Site bir JS uygulamasıdır; URL parametresi tahminleri
-denendi ve **tutmadı**.
+```js
+const spec = {};
+kart.querySelectorAll('.listingCard__spec-item').forEach(s => {
+  const e = s.querySelector('.listingCard__spec-label');
+  if (e) spec[e.innerText.trim()] = s.innerText.replace(e.innerText, '').trim();
+});
+// spec['Bina Yaşı'] -> "20 Yaşında" | "Sıfır Bina" | undefined
+```
 
-1. Arama sayfasını aç, fiyat filtresini **arayüzden** uygula.
-2. Oluşan URL'i oku — şema buradan çıkar.
-3. Bir karttaki alanların seçicilerini doğrula (başlık, fiyat, m², oda, **bina yaşı**, ilçe/semt, tarih).
-4. Ölçtüklerini **bu dosyanın yukarıdaki tablosuna geri yaz** (Edit ile), ⚠️ işaretini kaldır.
-5. Ölçemediğin bir şey olursa **taslak** işaretle ve kısmi teslim et — uydurma.
+`"Sıfır Bina"` → `bina_yasi = 0`. `"N Yaşında"` → `bina_yasi = N`.
+Beklenmedik bir metin gelirse `bina_yasi = null`, ham metni `bina_yasi_bant`'a yaz.
 
-Filtre URL'den uygulanamıyorsa arayüzden uygula ve `meta.notlar` alanına
-`"filtre arayuzden uygulandi"` yaz.
+### ⛔ Fiyat filtresi URL'den uygulanamıyor — ölçüldü
+
+Sayfada `priceMin` / `priceMax` adlı input'lar var (ayrıca `squareMin`, `squareMax`,
+`netSquareMin`, `netSquareMax`). Ama:
+
+| Deneme | Sonuç |
+|---|---|
+| `?priceMin=2800000&priceMax=3000000` | Parametre kabul ediliyor, **yok sayılıyor** — toplam 1.704'te kalıyor, gelen fiyatlar 1,1M-15,5M |
+| Sentetik `input`/`change` olayı + "Ara" tıklaması | URL **değişmiyor**, sonuç değişmiyor |
+
+**Çözüm: filtreyi siteye uygulatma.** Tüm sayfaları çek, fiyat/m² elemesini **Python tarafında** yap.
+71 sayfa × 3 sn ≈ 4 dakika — detay sayfasına inmediğin için bu ucuzdur. `meta.filtre` alanına
+istenen aralığı yaz, `meta.notlar`'a `"filtre siteye uygulanamadi, eleme yerelde yapildi"` düş.
+
+Filtreyi gerçek klavye/fare ile (bu ajanın elindeki `computer` aracıyla) uygulamayı denemek serbesttir;
+başarırsan oluşan URL'i **bu dosyaya geri yaz** ve yukarıdaki satırı güncelle.
 
 ## Adımlar
 

@@ -115,13 +115,18 @@ oturumda bağlamda durur, ara sıra kullanılan bir skill için israftır. Adlar
 | Kısıt | Tahmin yasak; bulunamayan alan `null`; `0` ≠ `null`; CAPTCHA çözülmez; kendi sekmesinden başkasına dokunmaz |
 | Hata | Düşen ajan yeniden başlatılmaz, `SendMessage` ile sürdürülür |
 
-| Ajan | Durum |
-|---|---|
-| `emlaktoplayici-s-sahibinden` | **Tam** — arama yolu, sayfalama, kart seçici, liste alanları ve detay hız tavanı canlı ölçüldü |
-| `emlaktoplayici-s-hepsiemlak` | **Kısmi** — arama yolu, sayfalama, kart seçici ölçüldü; fiyat filtresi şeması ve detay seçicileri ölçülmedi |
-| `emlaktoplayici-s-emlakjet` | **Kısmi** — arama yolu ve sayfalama ölçüldü; kart seçici kısmen, liste alanları ölçülmedi |
+| Ajan | Durum | Bilinen eksik |
+|---|---|---|
+| `emlaktoplayici-s-sahibinden` | **Tam** — arama yolu, sayfalama, kart seçici, liste alanları, **detay seçicileri (25 alan)** ve detay hız tavanı canlı ölçüldü | — |
+| `emlaktoplayici-s-hepsiemlak` | **Liste tarafı tam** — sayfalama (71 sayfa/1.704 ilan), tüm kart seçicileri ve **kesin bina yaşı** ölçüldü | Fiyat filtresi siteye uygulatılamıyor → eleme yerelde yapılır. Detay seçicileri ölçülmedi (gerekmiyor) |
+| `emlaktoplayici-s-emlakjet` | **Kısmi — üretime hazır değil** | Kart sarmalayıcı `.listing-row-card-media` 30 kartın **10'unu** ayrıştırıyor; sebep doğrulanmadı. Fiyat filtresi ve detay seçicileri ölçülmedi |
 
 Kısmi ajanların ilk işi kendi eksiklerini **arayüzden ölçmek** ve ölçtüklerini prompt dosyasına geri yazmaktır.
+
+> **Deprem skoru için site tercihi:** bina yaşı skorun en ağır bileşenidir (0-3,5) ve üç site onu
+> çok farklı verir — **hepsiemlak kesin ve listede** (`"20 Yaşında"`), **sahibinden bant ve yalnız
+> detayda** (`"11-15 arası"`, ilan başına ~15 sn), **emlakjet hiç vermiyor**. Skor asıl amaçsa
+> hepsiemlak birinci tercihtir.
 
 ## 6. Gizlilik ve telif
 

@@ -13,7 +13,7 @@ diske yazmak. Analiz yapmazsın, Excel üretmezsin, yorum katmazsın.
 Üç site içinde **en az ölçülmüş** olan burasıdır. Aşağıdaki tabloda ⚠️ işaretli her satır
 **bilinmiyor** demektir — tahmin değil, boşluk. İlk işin bu boşlukları kapatmak.
 
-## Ölçülmüş gerçekler (14 Ağustos 2026)
+## Ölçülmüş gerçekler (14 Ağustos 2026 22:0x, canlı)
 
 ```
 https://www.emlakjet.com/satilik-daire/<konum>?sayfa=<N>
@@ -22,23 +22,37 @@ https://www.emlakjet.com/satilik-daire/<konum>?sayfa=<N>
 | Şey | Değer | Durum |
 |---|---|---|
 | Arama yolu | yukarıdaki | ✅ ölçüldü |
-| Sayfalama | `?sayfa=<N>` | ✅ ölçüldü |
-| Kart seçici | `a[href*="/ilan/"]` | ⚠️ **kısmen** — kart gövdesine güvenilir sarmalayıcı bulunamadı |
-| Liste sayfasındaki alanlar | — | ⚠️ **ÖLÇÜLMEDİ** |
+| Sayfalama | `?sayfa=<N>` | ✅ ölçüldü — Hatay: **169 ilan** |
+| Kart sarmalayıcı | `.listing-row-card-media` — sayfada 30 adet | ⚠️ **30 karttan yalnız 10'u ayrıştı** (aşağı bak) |
+| İlan kimliği | karttaki `a[href*="/ilan/"]`, yolun sonundaki sayı | ✅ |
+| Alanlar | tek satırda `·` ile ayrık: `3+1 · 110 m² · 4. Kat · 14.08.2026` | ✅ biçim doğrulandı |
+| Konum | `"Hatay, Arsuz"` satırı — virgülle böl | ✅ |
+| Fiyat | `₺` içeren satır | ✅ |
+| **Bina yaşı** | Liste sayfasında **YOK** | ✅ ölçüldü (yok olduğu doğrulandı) |
 | Fiyat filtresi URL şeması | — | ⚠️ **ÖLÇÜLMEDİ** |
 | Detay sayfası seçicileri | — | ⚠️ **ÖLÇÜLMEDİ** |
 | Hız tavanı | 14.08.2026'da engel görülmedi | ⚠️ ölçülmedi — sahibinden tavanı uygulanır |
 
-## İLK İŞİN: adaptörü tamamla
+### ⚠️ Bilinen kusur: kart sarmalayıcı güvenilir değil
 
-1. Arama sayfasını aç. **Kart sarmalayıcısını bul** — `a[href*="/ilan/"]` bağlantıyı yakalıyor ama
-   kartın gövdesini (fiyat, m², oda) güvenilir vermiyor. Bağlantının üst elemanlarına çık, tekrar eden
-   bir yapı ara.
-2. Fiyat filtresini **arayüzden** uygula, oluşan URL'i oku.
-3. Bir karttan çıkabilen alanları listele: başlık, fiyat, m², oda, ilçe/semt, tarih, bina yaşı.
-4. Ölçtüklerini **bu dosyanın yukarıdaki tablosuna geri yaz** (Edit ile), ⚠️ işaretini kaldır.
-5. **Ölçemediğin şey için uydurma.** O alanı `null` bırak, siteyi `meta.notlar`'da "taslak" işaretle
-   ve kısmi teslim et. Boş dönmek, yanlış dönmekten iyidir.
+`.listing-row-card-media` sayfada 30 kez bulunuyor ama tam ayrıştırma **10'unda** çalıştı.
+İki olası sebep, ikisi de doğrulanmadı:
+
+1. Sarmalayıcı yanlış katman — muhtemelen görsel kutusu, metin kardeş elemanda duruyor.
+2. Tembel yükleme — kartların metni görünür alana girene kadar basılmıyor.
+
+**İlk işin bunu çözmek:** sayfayı sonuna kadar kaydır (`window.scrollTo`), birkaç saniye bekle,
+sonra kart sayısını ve ayrışan sayısını tekrar ölç. Hâlâ eksikse `a[href*="/ilan/"]` bağlantısından
+yukarı çıkıp **metni de içeren** en küçük tekrar eden ata elemanı bul.
+
+Çözemezsen: bu siteyi `meta.notlar`'da **"taslak — kart ayrıştırma eksik"** işaretle, ayrışan kayıtları
+teslim et, `atlanan` sayacına ayrışmayanları yaz. **Sessiz kırpma yok.** Boş dönmek yanlış dönmekten iyidir.
+
+### Bu sitenin yeri
+
+169 ilanla üç site içinde en küçük envanter, bina yaşı da yok. Yani deprem skoruna katkısı sınırlı;
+asıl değeri **kapsama** — diğer ikisinde olmayan ilanları yakalamak ve sitelerarası fiyat karşılaştırması.
+Sıkışırsan bu siteyi atlamak, yanlış veri döndürmekten iyidir.
 
 ## Adımlar
 
