@@ -1,0 +1,41 @@
+{
+  "_kaynak": {
+    "hasar": {
+      "aciklama": "6 Şubat 2023 depremleri sonrası Çevre, Şehircilik ve İklim Değişikliği Bakanlığı kesin hasar tespiti sonuçları, Hatay 15 ilçe.",
+      "rapor_tarihi": "2023-04-08",
+      "dogrulama": "İki bağımsız kaynaktan birebir aynı çekildi (Anadolu Ajansı ve bianet). Üç sütunun toplamı da kaynağın verdiği toplamlarla tutuyor: 13517 yıkık, 8162 acil yıkılacak, 67346 ağır hasarlı.",
+      "url": [
+        "https://www.aa.com.tr/tr/asrin-felaketi/depremlerin-vurdugu-hatayda-en-agir-yikim-antakyada/2866977",
+        "https://bianet.org/haber/hatay-deprem-tespit-raporu-en-agir-yikim-antakya-da-277027"
+      ],
+      "cekilme_tarihi": "2026-08-14"
+    },
+    "nufus": {
+      "aciklama": "TÜİK ADNKS 31 Aralık 2022 ilçe nüfusları. DEPREM ÖNCESİ nüfus bilerek kullanıldı: hasar 2023 öncesi yapı stokuna ve o stokta yaşayan nüfusa oldu. 2025 nüfusu göç yüzünden çarpık payda verir (Antakya 399.045 -> 301.855).",
+      "yil": 2022,
+      "cekilme_tarihi": "2026-08-14",
+      "uyari": "Altınözü değeri kaynakta ayrı listelenmemişti; il toplamından (1.686.043) diğer 14 ilçenin toplamı çıkarılarak TÜRETİLDİ. Doğrudan kaynaktan doğrulanınca bu not silinir."
+    },
+    "kullanim": "Skor bileşeni ham sayıyı değil YOĞUNLUĞU kullanır: (yikik + acil + agir) / nufus * 1000. Yoğunluk 15 ilçe arasında min-maks ölçeklenip 0-2,5 aralığına oturtulur. Ölçekleme emlaktoplayici_depremskorla.py içindedir, burada önceden hesaplanmış skor TUTULMAZ."
+  },
+
+  "ilceler": {
+    "Antakya":   { "yikik": 6369, "acil": 3734, "agir": 21830, "nufus_2022": 399045 },
+    "Kırıkhan":  { "yikik": 1886, "acil":  605, "agir":  6593, "nufus_2022": 121028 },
+    "Hassa":     { "yikik": 1046, "acil":  565, "agir":  2887, "nufus_2022":  56675 },
+    "Defne":     { "yikik":  982, "acil":  943, "agir":  8894, "nufus_2022": 165494 },
+    "Altınözü":  { "yikik":  838, "acil":  650, "agir":  3892, "nufus_2022":  59944, "nufus_turetilmis": true },
+    "Samandağ":  { "yikik":  670, "acil":  557, "agir":  8655, "nufus_2022": 123447 },
+    "İskenderun":{ "yikik":  534, "acil":  337, "agir":  4622, "nufus_2022": 251682 },
+    "Reyhanlı":  { "yikik":  318, "acil":  134, "agir":  1527, "nufus_2022": 108092 },
+    "Yayladağı": { "yikik":  213, "acil":  141, "agir":  1312, "nufus_2022":  36803 },
+    "Arsuz":     { "yikik":  187, "acil":  194, "agir":  2176, "nufus_2022": 101233 },
+    "Belen":     { "yikik":  139, "acil":   87, "agir":   755, "nufus_2022":  34449 },
+    "Kumlu":     { "yikik":  131, "acil":   84, "agir":   738, "nufus_2022":  13333 },
+    "Dörtyol":   { "yikik":  115, "acil":   75, "agir":  1955, "nufus_2022": 128941 },
+    "Payas":     { "yikik":   58, "acil":   39, "agir":   630, "nufus_2022":  43919 },
+    "Erzin":     { "yikik":   31, "acil":   17, "agir":   880, "nufus_2022":  41958 }
+  },
+
+  "_toplam_kontrol": { "yikik": 13517, "acil": 8162, "agir": 67346, "nufus_2022": 1686043 }
+}

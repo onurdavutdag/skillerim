@@ -1,0 +1,101 @@
+# Tarayıcı tekniği — ölçülmüş sınırlar
+
+Buradaki her satır **14 Ağustos 2026'da canlı ölçüldü**. Tahmin yok; ölçülmemiş olan açıkça öyle yazar.
+Bir sınır yeniden ölçülürse bu dosya güncellenir ve ölçüm tarihi değiştirilir.
+
+## 1. Araç sınırları (site bağımsız)
+
+| Sınır | Ölçüm | Sonuç |
+|---|---|---|
+| `javascript_tool` süresi | **45 sn** CDP timeout | Her çağrı <40 sn tasarlanır. Uzun toplama tek çağrıya sığdırılmaz, parçalanır |
+| Tool çıktısı | ~**1.200 karakter** | Veri `return` ile dışarı taşınmaz — tarayıcıda biriktirilir, sonunda toplu aktarılır |
+| Toplu aktarım | `clipboard.writeText` + PowerShell `Get-Clipboard -Raw` | Çalışır. **Panoyu ezer** — kullanıcıya önceden söylenir |
+| İlerleme kalıcılığı | Sekme yenilenince `window` üzerindeki her şey uçar | Her partide `localStorage`'a yazılır; kaza sonrası kaldığı yerden sürer |
+
+### Toplu aktarım kalıbı
+
+```js
+// biriktir (her partide)
+localStorage.setItem('emlak_ilanlar', JSON.stringify(hepsi));
+// aktar (sonunda)
+navigator.clipboard.writeText(localStorage.getItem('emlak_ilanlar'));
+```
+
+```powershell
+Get-Clipboard -Raw | Out-File -Encoding utf8 "output\json\<site> <YYYYAAGG SSDD>.json"
+```
+
+## 2. Site başına hız tavanı
+
+| Site | İşlem | Ölçüm | Kural |
+|---|---|---|---|
+| **sahibinden** | liste sayfası | 3-5 sn arayla sorunsuz | ≥3 sn bekle, `pagingSize=50` ile sayfa sayısını azalt |
+| **sahibinden** | detay sayfası | `fetch` ile **5. istekte HTTP 429**; ısrar edilince oturum `/olagan-disi-kullanim`'a düştü | **XHR/`fetch` kullanılmaz.** Gerçek gezinti, **≥12-15 sn** + rastgele sapma |
+| **hepsiemlak** | liste | 14.08.2026'da engel görülmedi | sahibinden tavanı uygulanır (temkinli varsayılan) |
+| **emlakjet** | liste | 14.08.2026'da engel görülmedi | aynı |
+
+> **Neden `fetch` değil gerçek gezinti:** `fetch` ile atılan istek tarayıcının normal gezinti imzasını
+> taşımaz ve arka arkaya çok hızlı gider. Ölçümde beşinci istekte 429 döndü; devam edilince site oturumu
+> `/olagan-disi-kullanim` sayfasına kilitledi ve **liste taraması da** kullanılamaz hâle geldi.
+
+## 3. Blok davranışı ve toparlanma
+
+**Blok işaretleri:** HTTP 429; `/olagan-disi-kullanim` yönlendirmesi; boş dönen kart listesi;
+beklenmedik CAPTCHA sayfası.
+
+**Blok görülünce sırasıyla:**
+
+1. **Dur.** Yeniden deneme yapılmaz — ısrar bloğu uzatır.
+2. Kaldığın indeksi `localStorage`'a yaz.
+3. O ana kadar toplananı diske yaz. Yarım veri de veridir; `atlanan` sayısıyla birlikte teslim edilir.
+4. `blok_yedi_mi: true` ve `atlanan: <sayı>` ile geri dön.
+5. **~30 dakika** sonra devam edilebilir (ölçülmedi, temkinli tahmin — bunu kullanıcıya böyle söyle).
+
+**CAPTCHA çözülmez.** Hesaba girilmez. Blok aşmak için proxy/UA hilesi denenmez.
+
+## 4. Sayfalama ve seçiciler
+
+### sahibinden — ✅ tam ölçüldü
+
+```
+https://www.sahibinden.com/<kategori>/<konum>?price_min=<n>&price_max=<n>&pagingSize=50&pagingOffset=<N>
+```
+
+- `pagingOffset` 0, 50, 100 … şeklinde ilerler; `pagingSize=50` en büyük değer
+- Kart seçici: `tr.searchResultsItem[data-id]`
+- Listede hazır gelen alanlar: **başlık, m², oda, fiyat, ilan tarihi, ilçe/semt** — hepsi liste sayfasından
+- Fiyat filtresi URL parametresiyle çalışır ✓
+- **Bina yaşı listede YOK** → detay gerekir (150 ilan ≈ 40 dk)
+
+### hepsiemlak — kısmen ölçüldü
+
+```
+https://www.hepsiemlak.com/<konum>-satilik/daire?page=<N>
+```
+
+- Kart seçici: `article` (sınıfları `listingCard__*` deseninde)
+- Listede **bina yaşı var** ✓ — deprem skorunun en ağır bileşeni detaya inmeden elde edilir
+- ⚠️ **ÖLÇÜLMEDİ:** fiyat filtresi URL şeması. JS uygulaması, parametre tahminleri tutmadı —
+  ajan filtreyi **arayüzden** uygulayıp oluşan URL'i okumalı
+- ⚠️ **ÖLÇÜLMEDİ:** detay sayfası seçicileri ve hız tavanı
+
+### emlakjet — kısmen ölçüldü
+
+```
+https://www.emlakjet.com/satilik-daire/<konum>?sayfa=<N>
+```
+
+- Kart seçici: `a[href*="/ilan/"]` — kısmen çalışıyor, kart gövdesine güvenilir bir sarmalayıcı bulunamadı
+- ⚠️ **ÖLÇÜLMEDİ:** liste sayfasındaki alanlar, fiyat filtresi şeması, detay seçicileri, hız tavanı
+
+> **Kural:** ⚠️ etiketli hiçbir alan üretimde varsayılmaz. Ajan önce ölçer, ölçtüğünü kendi prompt
+> dosyasına geri yazar, sonra kullanır. Ölçemezse o siteyi "taslak" işaretler ve kısmi teslim eder.
+
+## 5. Neden bu maliyet — detay taramasının matematiği
+
+Liste sayfası ilan başına ~0,1 sn'ye mal olur (50 ilan tek sayfada). Detay sayfası ilan başına
+**≥12-15 sn**'dir — 120-150 kat pahalı.
+
+Sonuç: **detay alanları yalnız gerçekten isteniyorsa toplanır** ve kullanıcıya süresi baştan söylenir.
+hepsiemlak'ta bina yaşı listede geldiği için, deprem skoru asıl amaçsa **önce hepsiemlak taranır** ve
+sahibinden detayına hiç inilmeyebilir.

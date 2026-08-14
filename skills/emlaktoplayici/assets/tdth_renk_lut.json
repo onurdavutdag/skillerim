@@ -1,0 +1,24 @@
+{
+  "_durum": "BOŞ — HENÜZ KURULMADI",
+  "_kaynak": {
+    "aciklama": "AFAD Türkiye Deprem Tehlike Haritası (TDTH) WMS servisi raster döndürür. GetFeatureInfo çağrısı PGA sayısı değil piksel RENGİ verir. Bu dosya rengi PGA'ya çeviren tablodur.",
+    "servis": "TUCBS açık WMS — trk_afad_tdth_wms, katman 58, GetFeatureInfo",
+    "giris_gerekiyor_mu": false,
+    "olcum_tarihi": null
+  },
+
+  "_nasil_kurulur": [
+    "1. WMS GetLegendGraphic çağrısıyla katman 58'in lejant görselini indir.",
+    "2. Lejanttaki her renk kutusunun RGB değerini ve yanındaki PGA aralığını oku.",
+    "3. Her girdiyi asagidaki 'tablo' dizisine {r, g, b, pga_min, pga_max} olarak yaz.",
+    "4. '_durum' alanını 'KURULDU' yap, '_kaynak.olcum_tarihi' alanına tarihi yaz.",
+    "5. Doğrulama: bilinen iki noktayı sorgula — Antakya merkez yüksek banda, Erzin düşük banda düşmeli."
+  ],
+
+  "_kural": "Tablo boşken emlaktoplayici_depremskorla.py sismik tehlike bileşenini BOŞ bırakır — sıfır yazmaz, tahmin etmez, ortalamayla doldurmaz. Skorun yanındaki '(N/6 bileşen)' güveni bir eksilir. Bu bilinçli bir tercihtir: uydurulmuş bir PGA, hesaplanmamış bir PGA'dan daha zararlıdır.",
+
+  "eslesme_toleransi": 12,
+  "_eslesme_toleransi_not": "Raster JPEG sıkıştırması yüzünden piksel rengi lejant renginden birkaç birim sapabilir. Öklit RGB uzaklığı bu toleransın altındaysa eşleşme sayılır; üstündeyse bileşen yine BOŞ kalır.",
+
+  "tablo": []
+}
