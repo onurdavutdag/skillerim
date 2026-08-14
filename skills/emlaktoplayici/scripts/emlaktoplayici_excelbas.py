@@ -163,6 +163,8 @@ def sutunlari_kur(kayitlar):
     ]
     if var("bina_yasi"):
         sutunlar.append(("Bina Yasi", "bina_yasi", 10))
+    if var("bina_yasi_bant"):
+        sutunlar.append(("Bina Yasi Bandi", "bina_yasi_bant", 15))
     if var("toplam_kat"):
         sutunlar.append(("Toplam Kat", "toplam_kat", 11))
     if deprem_var:

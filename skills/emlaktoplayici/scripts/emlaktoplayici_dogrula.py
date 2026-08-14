@@ -197,6 +197,31 @@ def deprem_dogrula():
     kontrol("TR buyuk/kucuk harf duyarsiz ilce eslesmesi", a is not None and a == b,
             "{} vs {}".format(a, b))
 
+    # --- bina yasi BANDI (sahibinden bandli veriyor: "11-15 arası")
+    print("  -- bina yasi bandi --")
+    kontrol("bant ayiklama: '11-15 arası'", skorla_mod._yas_araligi("11-15 arası") == (11, 15))
+    kontrol("bant ayiklama: '31 ve üzeri'", skorla_mod._yas_araligi("31 ve üzeri") == (31, None))
+    kontrol("bant ayiklama: '4'", skorla_mod._yas_araligi("4") == (4, 4))
+    kontrol("bant ayiklama: sayi yoksa None", skorla_mod._yas_araligi("belirtilmemis") is None)
+
+    # 2026'da 11-15 yas -> 2011-2015 -> hepsi 2007-2018 bandinda -> KESIN 1.0
+    p, n = skorla_mod.bilesen_yonetmelik({"bina_yasi": None, "bina_yasi_bant": "11-15 arası"}, 2026)
+    kontrol("tek yonetmelige oturan bant KESIN cozuluyor", p == 1.0, "{} / {}".format(p, n))
+    kontrol("kesin bantta 'ust sinir' notu YOK", n and "ust sinir" not in n, str(n))
+
+    # 2026'da 5-10 yas -> 2016-2021 -> 2007-2018 (1.0) ile >=2019 (0.5) arasinda yayiliyor
+    p, n = skorla_mod.bilesen_yonetmelik({"bina_yasi": None, "bina_yasi_bant": "5-10 arası"}, 2026)
+    kontrol("yayilan bantta YUKSEK riskli sinir aliniyor", p == 1.0, "{} / {}".format(p, n))
+    kontrol("yayilan bantta 'ust sinir' notu VAR", n and "ust sinir" in n, str(n))
+
+    # 2026'da 31+ yas -> <=1995 -> 1976-1997 (3.0) ile <=1975 (3.5) arasinda; ust sinir 3.5
+    p, n = skorla_mod.bilesen_yonetmelik({"bina_yasi": None, "bina_yasi_bant": "31 ve üzeri"}, 2026)
+    kontrol("ucu acik bantta en yuksek risk aliniyor", p == 3.5, "{} / {}".format(p, n))
+
+    # Kesin yas her zaman banda tercih edilir
+    p, _ = skorla_mod.bilesen_yonetmelik({"bina_yasi": 2, "bina_yasi_bant": "31 ve üzeri"}, 2026)
+    kontrol("kesin yas bandi EZIYOR", p == 0.5, str(p))
+
 
 def zincir_dogrula(gecici):
     print("\n[3] Uctan uca zincir")

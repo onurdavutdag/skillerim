@@ -28,7 +28,9 @@ HUCRE_SINIRI = 32000
 EKLENECEK = [
     ("tapu_durumu", "Tapu Durumu", 17, "Oda"),
     ("bina_yasi", "Bina Yasi", 10, "Semt"),
+    ("bina_yasi_bant", "Bina Yasi Bandi", 15, "Semt"),  # sahibinden hep bant verir
     ("toplam_kat", "Toplam Kat", 11, "Semt"),
+    ("isitma", "Isitma", 16, "Semt"),
     ("aciklama", "Aciklama", 60, "son"),
 ]
 

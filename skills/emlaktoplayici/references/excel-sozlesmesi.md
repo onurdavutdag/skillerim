@@ -60,7 +60,8 @@ Dosya adı: `output/json/<site> <YYYYAAGG SSDD>.json`
 | `il` / `ilce` / `semt` | string / null | `ilce` ✅ | `ilce` tekilleştirme anahtarının parçası, boş bırakılamaz |
 | `tarih` | `YYYY-MM-DD` / null | — | İlan yayın/güncelleme tarihi |
 | `link` | string | ✅ | Tam URL |
-| `bina_yasi` | int / null | — | **Yıl değil, yaş.** "2015 ve sonrası" gibi bantlar `null` + `notlar` |
+| `bina_yasi` | int / null | — | **Yıl değil, yaş.** Yalnız düz sayı buraya girer |
+| `bina_yasi_bant` | string / null | — | Site bant veriyorsa ham metin (`"11-15 arası"`, `"31 ve üzeri"`). **sahibinden hep bant verir.** Banttan tek sayı türetilmez — skorlayıcı bandı kendi çözer |
 | `kat` / `toplam_kat` | int / null | — | `kat` bodrum için negatif, zemin `0` |
 | `tapu_durumu` / `aciklama` | string / null | — | Yalnız detay taramasında dolar |
 

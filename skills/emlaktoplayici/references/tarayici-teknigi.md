@@ -38,6 +38,31 @@ Get-Clipboard -Raw | Out-File -Encoding utf8 "output\json\<site> <YYYYAAGG SSDD>
 > taşımaz ve arka arkaya çok hızlı gider. Ölçümde beşinci istekte 429 döndü; devam edilince site oturumu
 > `/olagan-disi-kullanim` sayfasına kilitledi ve **liste taraması da** kullanılamaz hâle geldi.
 
+### ⛔ iframe de kullanılmaz — 14.08.2026 21:50'de ölçüldü
+
+Detay toplamayı hızlandırmak için gizli `<iframe>` denendi: aynı kaynak olduğu için `contentDocument`
+okunabiliyor ve tek `javascript_tool` çağrısında birden çok ilan gezilebiliyordu. **Çalıştı, sonra bloklandı.**
+
+| Deneme | Sonuç |
+|---|---|
+| Tek iframe ile bir ilan | ✅ 25 alan + açıklama okundu |
+| Döngü hâlinde, 12-15 sn aralıkla | ❌ **2. ilanda** `/olagan-disi-kullanim` |
+
+İki sebep birden vardı ve ikisi de ders:
+
+1. **Eşzamanlılık hatası (bizim hatamız).** Çalışan döngü `window.__dur=true` ile durduruldu, 16 sn beklendi,
+   sonra bayrak `false`'a çevrilip yeni döngü başlatıldı. Eski döngü o sırada `sleep` içindeydi; uyanınca
+   bayrağı yine `false` gördü ve **devam etti**. İki döngü aynı anda istek attı, fiilî aralık yarıya indi.
+   → **Durdurma bayrağı geri alınmaz.** Yeniden başlatmada yeni bir bayrak adı (`__dur2`) kullanılır ya da
+   döngüye kimlik verilip `if (window.__kosuNo !== benimNo) break` ile eskisi kalıcı olarak susturulur.
+2. **iframe'in kendi imzası (asıl sebep).** İlan sayfası `Sec-Fetch-Dest: iframe` ile istenmez — gerçek
+   kullanıcı bir ilan detayını çerçeveye almaz. Bu tek başına otomasyon parmak izidir; aralık doğru olsa
+   bile şüphelidir.
+
+**Kural: detay sayfasına yalnız üst düzey gerçek gezintiyle girilir** (`navigate` aracı ya da kullanıcı
+tıklaması gibi). `fetch` yok, XHR yok, **iframe yok**. Maliyeti ilan başına iki tool çağrısıdır ve bu
+maliyet kabul edilir — kestirmenin bedeli saatlerce süren blok olmuştur.
+
 ## 3. Blok davranışı ve toparlanma
 
 **Blok işaretleri:** HTTP 429; `/olagan-disi-kullanim` yönlendirmesi; boş dönen kart listesi;

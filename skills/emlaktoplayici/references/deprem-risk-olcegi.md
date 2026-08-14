@@ -36,6 +36,23 @@ Bina yaşından yapım yılı çıkarılır, yürürlükteki deprem yönetmeliğ
 > başladı ve Hatay bu illerden biriydi. Türkiye genelinde zorunluluk 2011'i buldu. Hatay'da 2001 sonrası
 > yapılan bina, çoğu ilden farklı olarak denetim kapsamındaydı.
 
+#### Bant hâlinde gelen bina yaşı
+
+sahibinden bina yaşını **tek sayı olarak vermez**, bant verir: `"11-15 arası"`, `"5-10 arası"`,
+`"31 ve üzeri"`. Bant `bina_yasi_bant` alanında ham hâliyle saklanır ve skorlayıcı şöyle çözer:
+
+| Durum | Davranış | Örnek (2026) |
+|---|---|---|
+| Bant tek yönetmelik aralığına tam oturuyor | **Kesin** puan | `11-15` → 2011-2015 → hepsi 2007-2018 → **1,0** |
+| Bant iki aralığa yayılıyor | **Yüksek riskli** sınır alınır, `Neden`'e *"bant, üst sınır alındı"* düşer | `5-10` → 2016-2021 → 1,0 ile 0,5 arası → **1,0** |
+| Bant ucu açık (`31 ve üzeri`) | En eski ihtimalin puanı | `31+` → ≤1995 → **3,5** |
+| Düz sayı da varsa | Sayı bandı **ezer** | `bina_yasi=2` → 0,5 |
+
+> **Neden ortalama değil üst sınır:** ortalama almak interpolasyondur, yani tahmindir — bu skillde yasak.
+> İki uçtan birini seçmek gerekiyorsa **yüksek riskli** olan seçilir: bu bir **ön eleme** aracıdır, riski
+> fazla göstermek insanı daha yakından bakmaya iter; eksik göstermek ise yanlış güven verir. Seçim
+> `Neden` sütununda açıkça yazar, kullanıcı görebilir.
+
 ### 1.2 İlçe hasar yoğunluğu (0-2,5)
 
 6 Şubat 2023 depremleri sonrası **kesin hasar tespiti** sayıları. İlçenin

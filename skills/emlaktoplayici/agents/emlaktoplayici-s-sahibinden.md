@@ -26,15 +26,47 @@ https://www.sahibinden.com/<kategori>/<konum>?price_min=<n>&price_max=<n>&paging
 | Listeden gelen alanlar | başlık, m², oda, fiyat, ilan tarihi, ilçe/semt — **hepsi liste sayfasından** |
 | Fiyat filtresi | URL parametresiyle çalışır ✓ |
 | Liste hızı | 3-5 sn arayla sorunsuz |
-| **Bina yaşı** | Listede **YOK** — detay gerektirir |
+| **Bina yaşı** | Listede **YOK** — detay gerektirir; detayda da **bant** olarak gelir (aşağı bak) |
+
+### Detay sayfası seçicileri (14.08.2026 ölçüldü)
+
+Alanlar `.classifiedInfoList li` içinde etiket/değer çifti, açıklama `#classifiedDescription`:
+
+```js
+const li=[...d.querySelectorAll('.classifiedInfoList li')].map(x=>{
+  const s=x.querySelectorAll('strong,span');
+  return [(s[0]||{}).innerText?.trim(),(s[1]||{}).innerText?.trim()]}).filter(p=>p[0]);
+const o=Object.fromEntries(li);   // 25 alan
+```
+
+Anahtarlar: `İlan No · İlan Tarihi · Emlak Tipi · m² (Brüt) · m² (Net) · Oda Sayısı · Bina Yaşı ·
+Kat Sayısı · Bulunduğu Kat · Isıtma · Banyo Sayısı · Mutfak · Balkon · Asansör · Otopark · Eşyalı ·
+Kullanım Durumu · Site İçerisinde · Site Adı · Aidat (TL) · Krediye Uygun · Enerji Kimlik Belgesi ·
+Tapu Durumu · Kimden · Takas`
+
+⚠️ **`Bina Yaşı` BANT gelir**, tek sayı değil: `"11-15 arası"`, `"5-10 arası"`, `"31 ve üzeri"`.
+Bandı **olduğu gibi** `bina_yasi_bant` alanına yaz, `bina_yasi` alanını `null` bırak. Banttan tek sayı
+**uydurma** — skorlayıcı bandı kendi çözer (`references/deprem-risk-olcegi.md` §1.1).
+Değer düz sayıysa (`"4"`) `bina_yasi`'na yaz, `bina_yasi_bant`'ı `null` bırak.
 
 ## Kırmızı çizgi — detay sayfası
 
-**`fetch`/XHR ile detay çekme.** Ölçüldü: 5. istekte **HTTP 429**, ısrar edilince oturum
-`/olagan-disi-kullanim` sayfasına kilitlendi ve **liste taraması da** çalışmaz oldu.
+Detay sayfasına **yalnız üst düzey gerçek gezintiyle** girilir (`navigate` aracı).
+İlan başına **≥12-15 saniye** + rastgele sapma. 150 ilan ≈ 40 dakika — çağırana baştan söyle.
 
-Detay isteniyorsa: **gerçek gezinti**, ilan başına **≥12-15 saniye** + rastgele sapma.
-150 ilan ≈ 40 dakika. Bunu çağırana baştan söyle.
+**Üçü de yasak, üçü de ölçülerek yasaklandı:**
+
+| Yöntem | Ne oldu |
+|---|---|
+| `fetch` / XHR | 5. istekte **HTTP 429**, ısrar edilince oturum `/olagan-disi-kullanim`'a kilitlendi |
+| Gizli `<iframe>` | **2. ilanda** `/olagan-disi-kullanim`. İlan sayfası `Sec-Fetch-Dest: iframe` ile istenmez; tek başına otomasyon parmak izidir |
+| Paralel döngü | Aralık doğru görünse de fiilî istek hızını katlar — blok sebebi |
+
+Hızlandırmak için kestirme arama. İlan başına iki tool çağrısı (bir `navigate`, bir okuma)
+**kabul edilen maliyettir**. Ayrıntı: `references/tarayici-teknigi.md` §2.
+
+**Döngüyü durdurup yeniden başlatıyorsan** durdurma bayrağını geri alma — eski döngü uykudan
+uyanınca devam eder ve iki döngü aynı anda istek atar. Yeni bayrak adı kullan ya da koşu numarası ver.
 
 ## Adımlar
 

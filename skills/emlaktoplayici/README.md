@@ -14,8 +14,10 @@
 > hız tavanı ya canlı ölçülmüştür ya da `⚠️ ÖLÇÜLMEDİ` etiketi taşır. Etiketli alan üretimde kullanılmaz;
 > ajan önce ölçer, sonra kullanır ve ölçtüğünü dosyaya geri yazar.
 >
-> _Son güncelleme: 2026-08-14 — skill kuruldu; sahibinden adaptörü canlı ölçümle tam, hepsiemlak ve
-> emlakjet kısmi (filtre şeması ve detay seçicileri ölçülmedi)._
+> _Son güncelleme: 2026-08-14 22:10 — skill kuruldu; sahibinden adaptörü canlı ölçümle tam (detay
+> seçicileri ve 25 alan anahtarı dahil), hepsiemlak ve emlakjet kısmi. İlk gerçek koşuda iki şey öğrenildi
+> ve kayda geçti: **iframe ile detay toplamak bloklanıyor** (`tarayici-teknigi.md` §2) ve **sahibinden
+> bina yaşını bant veriyor** (`deprem-risk-olcegi.md` §1.1)._
 
 ---
 
@@ -143,13 +145,13 @@ cd scripts
 python -B emlaktoplayici_dogrula.py
 ```
 
-**79 denetim**, beş bölümde. Çıkış kodu 0 = hepsi geçti.
+**89 denetim**, beş bölümde. Çıkış kodu 0 = hepsi geçti.
 
 | Bölüm | Ne sınanır |
 |---|---|
 | `[0]` Adlandırma | N3/N4/N5/N6/N7/N9/N10/N11/N12 — klasör↔`name` eşitliği, ajan öneki ve `skills:` sahipliği, `description` ≤1024, script adları |
 | `[1]` Varlıklar | Hasar tablosu 15 ilçe + üç sütun toplamı `_toplam_kontrol` ile tutuyor, nüfus toplamı tutuyor, koordinatlar Hatay kutusunda, iki tablo aynı ilçe kümesi, LUT şeması |
-| `[2]` Deprem skoru | Yüksek/düşük ilçe sıralaması, 0-10 sınırı, `(N/6)` güven etiketi, yetersiz veride skor **üretilmemesi**, sert kural (orta/ağır hasar → ≥8), hasarsız beyanının düşürmesi, TR büyük/küçük harf duyarsız ilçe eşleşmesi |
+| `[2]` Deprem skoru | Yüksek/düşük ilçe sıralaması, 0-10 sınırı, `(N/6)` güven etiketi, yetersiz veride skor **üretilmemesi**, sert kural (orta/ağır hasar → ≥8), hasarsız beyanının düşürmesi, TR büyük/küçük harf duyarsız ilçe eşleşmesi, **bina yaşı bandı çözümü** (tek aralığa oturan bant kesin, yayılan bantta üst sınır, düz sayı bandı ezer) |
 | `[3]` Uçtan uca | skorla → mesafe → excel → detayekle → fark zinciri; sayfa adları, başlık seti, fiyat/m² **sayı** tipi, dondurulmuş satır, filtre, tekilleştirme, Özet'te blok/atlanan/uyarı metni, detayekle **idempotanslığı**, fark sayıları |
 | `[4]` Şema koruyucuları | Zorunlu alan eksikse ve JSON bozuksa **anlamlı hatayla reddetme** |
 

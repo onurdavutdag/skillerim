@@ -80,18 +80,71 @@ def json_oku(yol):
 
 # ------------------------------------------------------------- bilesen 1: yonetmelik
 
-def bilesen_yonetmelik(kayit, bu_yil):
-    yas = kayit.get("bina_yasi")
-    if yas is None:
-        return None, None
-    try:
-        yapim = bu_yil - int(yas)
-    except (TypeError, ValueError):
-        return None, None
+def _yonetmelik_bandi(yapim_yili):
     for ust, puan, etiket in YONETMELIK_BANTLARI:
-        if yapim <= ust:
-            return puan, "{} yapimi ({})".format(yapim, etiket)
+        if yapim_yili <= ust:
+            return puan, etiket
     return None, None
+
+
+def _yas_araligi(metin):
+    """sahibinden bina yasini BANT olarak verir. Ornekler:
+    '11-15 arası' -> (11, 15) · '31 ve üzeri' -> (31, None) · '4' -> (4, 4)
+    """
+    s = sadelestir(metin)
+    sayilar = [int(x) for x in re.findall(r"\d+", s)]
+    if not sayilar:
+        return None
+    if "uzeri" in s or "ustu" in s or "fazla" in s:
+        return (sayilar[0], None)          # ust sinir yok: daha da eski olabilir
+    if len(sayilar) >= 2:
+        return (min(sayilar), max(sayilar))
+    return (sayilar[0], sayilar[0])
+
+
+def bilesen_yonetmelik(kayit, bu_yil):
+    """Yasin kendisi ya da BANDI kullanilir.
+
+    Bant tek bir yonetmelik araligina tam oturuyorsa deger kesindir. Iki aralige
+    yayiliyorsa YUKSEK RISKLI olan alinir ve `Neden` metnine "bant, ust sinir"
+    notu duser. Gerekce: bu bir ON ELEME aracidir; riski fazla gostermek insani
+    daha yakindan bakmaya iter, eksik gostermek ise yanlis guven verir. Ortalama
+    almak (interpolasyon) tahmindir, yapilmaz.
+    """
+    yas = kayit.get("bina_yasi")
+    aralik = None
+    if yas is not None:
+        try:
+            aralik = (int(yas), int(yas))
+        except (TypeError, ValueError):
+            aralik = None
+    if aralik is None and kayit.get("bina_yasi_bant"):
+        aralik = _yas_araligi(kayit["bina_yasi_bant"])
+    if aralik is None:
+        return None, None
+
+    alt, ust = aralik
+    yapim_yeni = bu_yil - alt                                  # olabilecek en yeni
+    puan_yeni, etiket_yeni = _yonetmelik_bandi(yapim_yeni)
+    if ust is None:
+        puan_eski, etiket_eski = YONETMELIK_BANTLARI[0][1], YONETMELIK_BANTLARI[0][2]
+        yapim_eski = None
+    else:
+        yapim_eski = bu_yil - ust                              # olabilecek en eski
+        puan_eski, etiket_eski = _yonetmelik_bandi(yapim_eski)
+    if puan_yeni is None or puan_eski is None:
+        return None, None
+
+    if puan_yeni == puan_eski:
+        if alt == ust:
+            return puan_yeni, "{} yapimi ({})".format(yapim_yeni, etiket_yeni)
+        return puan_yeni, "{}-{} yapimi ({})".format(yapim_eski, yapim_yeni, etiket_yeni)
+
+    puan = max(puan_yeni, puan_eski)
+    etiket = etiket_eski if puan_eski >= puan_yeni else etiket_yeni
+    eski_metin = yapim_eski if yapim_eski is not None else "?"
+    return puan, "{}-{} yapimi, bant iki yonetmelige yayiliyor - ust sinir alindi ({})".format(
+        eski_metin, yapim_yeni, etiket)
 
 
 # ------------------------------------------------------------ bilesen 2: ilce hasar
