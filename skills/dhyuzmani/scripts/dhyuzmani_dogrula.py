@@ -18,9 +18,9 @@ import argparse
 
 sys.stdout.reconfigure(encoding="utf-8")
 
-from dhyuzmani_kadro import kadrolari_topla
-from dhyuzmani_mesafe import kgm_yukle, ilce_yukle, mesafe_hesapla, ILCE_JSON
-from dhyuzmani_yatak import yerel_harita
+from dhyuzmani_kadrocikar import kadrolari_topla
+from dhyuzmani_mesafehesapla import kgm_yukle, ilce_yukle, mesafe_hesapla, ILCE_JSON
+from dhyuzmani_yatakesle import yerel_harita
 
 # Beklenen sabitler — kaynaklar değişirse burası da güncellenir
 KADRO_BEKLENEN = (88, 127)          # 120-129. dönem: benzersiz birim / toplam kadro
@@ -28,7 +28,7 @@ KGM_DOGRULAMA = {                   # KGM cetveli, Hatay satırı (03.03.2026)
     "ADANA": 196, "GAZİANTEP": 194, "KAHRAMANMARAŞ": 176,
     "OSMANİYE": 127, "KİLİS": 146, "ŞANLIURFA": 333, "İSTANBUL": 1147,
 }
-# veri-kaynaklari.md §3'te kaynaklarıyla belgelenen dört web düzeltmesi.
+# dhyuzmani-r-veri-kaynaklari.md §3'te kaynaklarıyla belgelenen dört web düzeltmesi.
 # 12.08.2026'da haritanın bu değerlerden saptığı görüldü; sapma bir daha
 # sessiz kalmasın diye burada denetlenir.
 YATAK_DUZELTMELERI = {

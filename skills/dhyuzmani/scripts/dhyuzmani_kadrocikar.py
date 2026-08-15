@@ -7,7 +7,7 @@ gruplar. CSV'ler hekim ad-soyadı içerdiği için bu script onları YALNIZ okur
 çıktısına ad-soyad yazmaz (hastane düzeyinde toplu veri üretir).
 
 Kullanım:
-    python dhyuzmani_kadro.py <csv_klasoru> [--brans "BEYİN VE SİNİR CERRAHİSİ"] [--json cikti.json]
+    python dhyuzmani_kadrocikar.py <csv_klasoru> [--brans "BEYİN VE SİNİR CERRAHİSİ"] [--json cikti.json]
 
 CSV şeması (dhy_ocr_parse üretimi):
     sira_no, basvuru_no, ad_soyad, unvan, brans, birim_kodu, birim_adi, il, genel_kura, _sayfa, _uyari

@@ -12,8 +12,8 @@ seçilirse yön bilgisi geçerliliğini yitirir; bu durumda ilçe-il merkezi uza
 işaretsiz belirsizlik olarak raporlanır.
 
 Kullanım:
-    python dhyuzmani_mesafe.py --birim "SİİRT EĞİTİM VE ARAŞTIRMA HASTANESİ" --il SİİRT
-    python dhyuzmani_mesafe.py --json kadrolar.json --cikti mesafeler.json [--referans HATAY]
+    python dhyuzmani_mesafehesapla.py --birim "SİİRT EĞİTİM VE ARAŞTIRMA HASTANESİ" --il SİİRT
+    python dhyuzmani_mesafehesapla.py --json kadrolar.json --cikti mesafeler.json [--referans HATAY]
 """
 import os
 import sys
@@ -108,7 +108,7 @@ def main():
     ap = argparse.ArgumentParser(description="Hastanelerin referans şehre karayolu mesafesi")
     ap.add_argument("--birim", help="Tek hastane adı")
     ap.add_argument("--il", help="--birim ile birlikte hastanenin ili")
-    ap.add_argument("--json", help="dhyuzmani_kadro.py çıktısı (toplu hesap)")
+    ap.add_argument("--json", help="dhyuzmani_kadrocikar.py çıktısı (toplu hesap)")
     ap.add_argument("--cikti", help="Toplu hesap sonucunun yazılacağı JSON")
     ap.add_argument("--referans", default=VARSAYILAN_REFERANS, help="Referans şehir (varsayılan HATAY)")
     args = ap.parse_args()

@@ -119,6 +119,6 @@ Projenin bilinen tam yolu (her çalıştırmada aranmasın diye):
 `C:\Users\onurd\OneDrive\1) My Files\2) Kişisel\Mart 2027 atama\output\csv`
 Taşınmışsa `1[0-9][0-9] DHY*` desenli dosyalar aranarak yeniden bulunur ve bu satır güncellenir.
 
-⚠️ **Bu CSV'ler binlerce hekimin ad-soyadını içerir.** Skill deposuna kopyalanmaz, uzak depoya gönderilmez, artifact'e basılmaz. `dhyuzmani_kadro.py` onları yalnız okur ve hastane düzeyinde toplu çıktı üretir.
+⚠️ **Bu CSV'ler binlerce hekimin ad-soyadını içerir.** Skill deposuna kopyalanmaz, uzak depoya gönderilmez, artifact'e basılmaz. `dhyuzmani_kadrocikar.py` onları yalnız okur ve hastane düzeyinde toplu çıktı üretir.
 
-OCR kaynaklı birim adı bozuklukları vardır (satır sonuna kaşe/imza artığı eklenmesi). `dhyuzmani_kadro.py` bilinen son eklerden sonrasını keserek normalize eder.
+OCR kaynaklı birim adı bozuklukları vardır (satır sonuna kaşe/imza artığı eklenmesi). `dhyuzmani_kadrocikar.py` bilinen son eklerden sonrasını keserek normalize eder.

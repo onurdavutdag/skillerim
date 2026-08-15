@@ -11,8 +11,8 @@ UYARI: KHGM listesi 02.02.2023 tarihlidir — 6 Şubat 2023 depreminden önce.
 Hatay ve Kahramanmaraş hastanelerinin fiilî kapasitesi tescilden farklı olabilir.
 
 Kullanım:
-    python dhyuzmani_yatak.py --json mesafeler.json --cikti yataklar.json
-    python dhyuzmani_yatak.py --birim "SİİRT EĞİTİM VE ARAŞTIRMA HASTANESİ" --il SİİRT
+    python dhyuzmani_yatakesle.py --json mesafeler.json --cikti yataklar.json
+    python dhyuzmani_yatakesle.py --birim "SİİRT EĞİTİM VE ARAŞTIRMA HASTANESİ" --il SİİRT
 """
 import os
 import sys
@@ -120,7 +120,7 @@ def main():
     ap = argparse.ArgumentParser(description="Hastanelerin tescilli yatak kapasitesi")
     ap.add_argument("--birim")
     ap.add_argument("--il")
-    ap.add_argument("--json", help="dhyuzmani_mesafe.py çıktısı")
+    ap.add_argument("--json", help="dhyuzmani_mesafehesapla.py çıktısı")
     ap.add_argument("--cikti")
     args = ap.parse_args()
 

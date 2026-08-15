@@ -7,18 +7,25 @@ sayılarını ekleyip tek sayfalık filtrelenebilir Excel üretir; ikinci sayfad
 yöntem notları durur.
 
 Kullanım:
-    python dhyuzmani_excel.py --json yataklar.json --tarama tarama.json \
+    python dhyuzmani_excelbas.py --json yataklar.json --tarama tarama.json \
         --cikti "output/xlsx/DHY Beyin Cerrahisi YYYYAAGG SSDD.xlsx" [--referans HATAY]
 
-`--tarama` dosyası dhyuzmani ajanlarının döndürdüğü kayıtlardır:
+`--tarama` iki şeyi kabul eder:
+  * tek JSON dosyası — doğrudan okunur
+  * **klasör** — içindeki `parti_*.json` dosyaları (tarama ajanlarının kendi yazdığı partiler)
+    birleştirilir, birleşik liste `output/json/dhyuzmani_tarama YYYYAAGG SSDD.json` olarak yazılır
+
+Kayıt biçimi dhyuzmani tarama ajanlarının yazdığı hâldir:
     [{"birim": ..., "bc_uzman": int|null, "bc_kaynak": url, "ameliyathane": int|null,
       "am_kaynak": url, "not": ...}, ...]
 """
 import os
 import sys
 import json
+import glob
 import difflib
 import argparse
+from datetime import datetime
 
 import openpyxl
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
@@ -37,6 +44,50 @@ def buyuk(s):
 BASLIKLAR = ["#", "Birim", "İl", "Karayolu (km)", "Yaklaşık mı", "Yatak",
              "Uzman", "Ameliyathane", "Dönemler", "Kadro", "Genel Kura", "Not"]
 GENISLIK = {1: 5, 2: 58, 3: 16, 4: 13, 5: 10, 6: 8, 7: 8, 8: 13, 9: 26, 10: 7, 11: 11, 12: 50}
+
+
+SAYI_ALANLARI = {"bc_uzman": "bc_kaynak", "ameliyathane": "am_kaynak"}
+
+
+def kayit_birlestir(a, b):
+    """Aynı birim iki partide çıktıysa: dolu değer null'a yeğlenir, çakışma nota yazılır."""
+    sonuc = dict(a)
+    notlar = [n for n in (a.get("not"), b.get("not")) if n]
+    for alan, kaynak in SAYI_ALANLARI.items():
+        av, bv = a.get(alan), b.get(alan)
+        if av is None and bv is not None:
+            sonuc[alan] = bv
+            sonuc[kaynak] = b.get(kaynak)
+        elif av is not None and bv is not None and av != bv:
+            notlar.append(f"çakışma: {alan} {av} ≠ {bv} (ilki alındı)")
+    sonuc["not"] = " | ".join(dict.fromkeys(notlar)) or None
+    return sonuc
+
+
+def parti_birlestir(klasor):
+    """Klasördeki parti_*.json dosyalarını tek listede toplar."""
+    yollar = sorted(glob.glob(os.path.join(klasor, "parti_*.json")))
+    if not yollar:
+        raise SystemExit(f"HATA - {klasor} altında parti_*.json bulunamadı")
+    toplam = {}
+    for yol in yollar:
+        with open(yol, encoding="utf-8") as f:
+            veri = json.load(f)
+        for kayit in veri:
+            ad = kayit.get("birim")
+            if not ad:
+                continue
+            toplam[ad] = kayit_birlestir(toplam[ad], kayit) if ad in toplam else dict(kayit)
+    return list(toplam.values()), yollar
+
+
+def birlesik_yol(cikti):
+    """Birleşik tarama JSON'unun varsayılan yeri: <output>/json/dhyuzmani_tarama YYYYAAGG SSDD.json"""
+    ad = f"dhyuzmani_tarama {datetime.now().strftime('%Y%m%d %H%M')}.json"
+    kls = os.path.dirname(os.path.abspath(cikti))
+    if os.path.basename(kls).lower() == "xlsx":
+        return os.path.join(os.path.dirname(kls), "json", ad)
+    return os.path.join(kls, ad)
 
 
 def tarama_esle(birimler, tarama):
@@ -112,8 +163,9 @@ def excel_yaz(kayitlar, cikti, referans, tarama_dosyasi=None):
 
 def main():
     ap = argparse.ArgumentParser(description="dhyuzmani Excel çıktısı")
-    ap.add_argument("--json", required=True, help="dhyuzmani_yatak.py çıktısı")
-    ap.add_argument("--tarama", help="Web taraması JSON'u (uzman + ameliyathane)")
+    ap.add_argument("--json", required=True, help="dhyuzmani_yatakesle.py çıktısı")
+    ap.add_argument("--tarama", help="Web taraması JSON'u ya da parti_*.json klasörü")
+    ap.add_argument("--birlesik", help="Klasör modunda birleşik JSON'un yazılacağı yol")
     ap.add_argument("--cikti", required=True)
     ap.add_argument("--referans", default="HATAY")
     args = ap.parse_args()
@@ -121,9 +173,19 @@ def main():
     with open(args.json, encoding="utf-8") as f:
         kayitlar = json.load(f)
 
+    tarama_dosyasi = args.tarama
     if args.tarama:
-        with open(args.tarama, encoding="utf-8") as f:
-            tarama = json.load(f)
+        if os.path.isdir(args.tarama):
+            tarama, yollar = parti_birlestir(args.tarama)
+            tarama_dosyasi = args.birlesik or birlesik_yol(args.cikti)
+            os.makedirs(os.path.dirname(os.path.abspath(tarama_dosyasi)), exist_ok=True)
+            with open(tarama_dosyasi, "w", encoding="utf-8") as f:
+                json.dump(tarama, f, ensure_ascii=False, indent=1)
+            print(f"parti birleştirildi: {len(yollar)} dosya -> {len(tarama)} kayıt")
+            print(f"birleşik tarama: {tarama_dosyasi}")
+        else:
+            with open(args.tarama, encoding="utf-8") as f:
+                tarama = json.load(f)
         eslesme, artan = tarama_esle([k["birim"] for k in kayitlar], tarama)
         for k in kayitlar:
             t = eslesme.get(k["birim"])
@@ -135,7 +197,7 @@ def main():
             print("UYARI - tabloya bağlanamayan tarama kaydı:", artan)
         print(f"tarama eşleşen: {len(eslesme)}/{len(kayitlar)}")
 
-    satir = excel_yaz(kayitlar, args.cikti, args.referans, args.tarama)
+    satir = excel_yaz(kayitlar, args.cikti, args.referans, tarama_dosyasi)
     u = sum(1 for k in kayitlar if k.get("bc_uzman") is not None)
     a = sum(1 for k in kayitlar if k.get("ameliyathane") is not None)
     y = sum(1 for k in kayitlar if k.get("yatak") is not None)
