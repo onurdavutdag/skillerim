@@ -69,12 +69,14 @@ KHGM listesini indirip `~/.claude/.cache/dhyuzmani/` altına önbellekler.
 Listedeki **tüm** hastaneler taranır — kısmi tarama yapılmaz.
 
 1. Hastaneler mesafe sırasına göre **10'arlı partilere** bölünür (88 hastane → 9 parti)
-2. Her parti için bir `general-purpose` ajanı, **hepsi tek mesajda**, arka planda başlatılır
-3. **Şablon prompta kopyalanmaz** — ajana kısa yönerge verilir, kuralları ajan kendi okur:
+2. Her parti için bir ajan, **hepsi tek mesajda**, arka planda başlatılır. Ajan tipi
+   `general-purpose`, **model `sonnet`** (`agents/dhyuzmani-s-webtarama.md` frontmatter'ındaki
+   değer) — iş web araması, pahalı model gerekmez
+3. **Görev metni prompta kopyalanmaz** — ajana kısa yönerge verilir, kuralları ajan kendi okur:
 
    ```
-   C:\Users\onurd\.claude\skills\dhyuzmani\references\dhyuzmani-r-ajan-sablonu.md dosyasını oku ve
-   "Ajan görevi" bölümündeki kurallara birebir uy.
+   C:\Users\onurd\.claude\skills\dhyuzmani\agents\dhyuzmani-s-webtarama.md dosyasını oku ve
+   kurallarına birebir uy.
 
    Parti: 03/09
    Bugün: <YYYY-AA-GG>
@@ -133,8 +135,8 @@ en yakın birkaç hastane ve dikkat çeken bulgular.
 | `scripts/dhyuzmani_yatakesle.py` | Yerel yatak haritası; eksikse KHGM listesini indirip eşler |
 | `scripts/dhyuzmani_excelbas.py` | Parti JSON'larını birleştirir, tüm veriyi harmanlayıp biçimli Excel üretir |
 | `scripts/dhyuzmani_dogrula.py` | Öz-denetim: KGM değerleri, varlık bütünlüğü, 4 web düzeltmesi, kadro 88/127 |
+| `agents/dhyuzmani-s-webtarama.md` | Web tarama ajanının tanımı ve görev metni (ajanın kendisi okur) |
 | `references/dhyuzmani-r-veri-kaynaklari.md` | Kaynak öncelikleri, bilinen tuzaklar, doğrulama değerleri |
-| `references/dhyuzmani-r-ajan-sablonu.md` | Tarama ajanının görev metni (ajanın kendisi okur) ve çıktı şeması |
 | `assets/kgm_il_mesafe.xlsx` | KGM İller Arası Mesafe Cetveli (03.03.2026) |
 | `assets/ilce_mesafe.json` | 46 ilçe hastanesi için Hatay'a doğrulanmış mesafe ofsetleri |
 | `assets/yatak_map.json` | 88 birimin tescilli yatak sayısı (KHGM türevi + 4 web düzeltmesi) |

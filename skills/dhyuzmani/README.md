@@ -1,15 +1,20 @@
 # dhyuzmani — Kullanım Kılavuzu
 
 > ## ⚠️ BAKIM KURALI (önce oku)
-> **Bu yaşayan bir belgedir.** `SKILL.md`, `references/` veya `scripts/` içinde bir kural
+> **Bu yaşayan bir belgedir.** `SKILL.md`, `agents/`, `references/` veya `scripts/` içinde bir kural
 > eklendiğinde, değiştiğinde veya kaldırıldığında bu dosya **aynı değişiklikle** güncellenir.
 >
 > **Bu skill'e özgü ikinci kural:** `SKILL.md` süreç akışının tek doğru kaynağıdır;
-> `references/dhyuzmani-r-veri-kaynaklari.md` veri kaynakları ve tuzakların, `references/dhyuzmani-r-ajan-sablonu.md`
-> ise tarama ajanı promptunun tek doğru kaynağıdır. Biri değişince diğerleriyle çelişmediği
-> doğrulanır.
+> `references/dhyuzmani-r-veri-kaynaklari.md` veri kaynakları ve tuzakların,
+> `agents/dhyuzmani-s-webtarama.md` ise tarama ajanının görev metninin tek doğru kaynağıdır.
+> Biri değişince diğerleriyle çelişmediği doğrulanır.
 >
-> _Son güncelleme: 2026-08-15 — tarama ajanı artık şablonu kendi okuyup parti JSON'unu kendi
+> _Son güncelleme: 2026-08-15 (ikinci tur) — tarama ajanı adlandırma kuralına alındı:
+> görev metni `references/dhyuzmani-r-ajan-sablonu.md`'den `agents/dhyuzmani-s-webtarama.md`'ye
+> taşındı, frontmatter (`name`, `description`, `skills`, `model: sonnet`) eklendi. `-s-tarayici`
+> elenmesinin sebebi: bu depoda "tarayıcı" browser anlamında kullanılıyor._
+>
+> _2026-08-15 — tarama ajanı artık şablonu kendi okuyup parti JSON'unu kendi
 > yazıyor (sohbete yalnız özet döner), parti birleştirme `dhyuzmani_excelbas.py --tarama <klasör>`
 > içine indi, tuzak listesi tek kaynağa (`dhyuzmani-r-veri-kaynaklari.md`) toplandı. Ayrıca script
 > ve referans adları N12/N13'e uyduruldu: `_kadrocikar`, `_mesafehesapla`, `_yatakesle`, `_excelbas`
@@ -76,7 +81,12 @@ indirme önbelleğe yerleşmez, bozuk önbellek kendini silip yeniden indirme is
 | Dosya | İçerik |
 |---|---|
 | `references/dhyuzmani-r-veri-kaynaklari.md` | Kaynak öncelik sırası, 11.08.2026 taramasında öğrenilen tuzaklar, KGM/KHGM şemaları, doğrulama değerleri |
-| `references/dhyuzmani-r-ajan-sablonu.md` | Tarama ajanının görev metni — **ajanın kendisi okur**; ana thread'in vereceği kısa yönerge, çıktı JSON şeması, partileme ve düşen ajanı sürdürme kuralları |
+
+### Ajan
+
+| Dosya | İçerik |
+|---|---|
+| `agents/dhyuzmani-s-webtarama.md` | Web tarama ajanının tanımı: frontmatter (`name`, `description`, `skills`, `model: sonnet`) ve görev metni — **ajanın kendisi okur**; kaynak önceliği, sekiz kural, çıktı JSON şeması, özet satırının biçimi, düşen ajanı sürdürme kuralı |
 
 ### Varlıklar
 
@@ -91,26 +101,28 @@ indirme önbelleğe yerleşmez, bozuk önbellek kendini silip yeniden indirme is
 
 ## 5. Alt ajanlar
 
-Bu skill'in kendi tanımlı alt ajanı yoktur; tarama adımında **jenerik `general-purpose` ajanları**
-kullanılır. Görev metni `references/dhyuzmani-r-ajan-sablonu.md`'dedir ve **ajan onu kendi okur** — ana thread
-şablonu 9 kez prompta kopyalamaz.
+Skill'in tek alt ajanı var: **`dhyuzmani-s-webtarama`**. Görev metni
+`agents/dhyuzmani-s-webtarama.md`'dedir ve **ajan onu kendi okur** — ana thread metni 9 kez
+prompta kopyalamaz.
 
 | Özellik | Değer |
 |---|---|
-| Ajan tipi | `general-purpose` (WebSearch + WebFetch + Read + Write) |
+| Ajan | `dhyuzmani-s-webtarama` (sahibi: dhyuzmani) |
+| Çalıştıran tip | `general-purpose`, **model `sonnet`** (WebSearch + WebFetch + Read + Write) |
 | Sayı | Hastane sayısı ÷ 10 (88 hastane → 9 ajan) |
 | Başlatma | Hepsi tek mesajda, arka planda |
-| Girdi | Şablon yolu + parti no + bugün + branş + çıktı dosyası + 10 hastane adı |
+| Girdi | Ajan dosyasının yolu + parti no + bugün + branş + çıktı dosyası + 10 hastane adı |
 | Çıktı (diske) | `parti_NN.json` — `birim, bc_uzman, bc_kaynak, ameliyathane, am_kaynak, not` |
 | Çıktı (sohbete) | Tek satır özet: dosya, kayıt sayısı, dolu/null sayıları, çelişki |
 | Kısıt | Tahmin yasak; bulunamayan alan `null`; `0` ≠ `null`; tuzaklar `dhyuzmani-r-veri-kaynaklari.md` §1-§2'den okunur |
 | Hata | Düşen ajan yeniden başlatılmaz, `SendMessage` ile sürdürülür; yarım parti dosyası korunur |
 
-**Neden adlandırılmış alt ajan yok:** bu kurulumda `skills/<skill>/agents/*.md` dosyaları kayıtlı
-ajan tipi değildir (çağıran yine `general-purpose`), `~/.claude/agents/` boştur. Kayıtlı ajan ancak
-plugin'e çevirmekle gelirdi; tek kazancı ajana ucuz model atamak olur, karşılığında her oturumun
-bağlamına açıklama yazılır ve üç katmanlı senkron yeniden kurulur. 15.08.2026'da bu takas
-reddedildi; tasarruf bunun yerine relay'i kesmekten sağlandı.
+**Ad ne değiştirir, ne değiştirmez.** Bu kurulumda `skills/<skill>/agents/*.md` dosyaları **kayıtlı
+ajan tipi değildir** (`~/.claude/agents/` boş, `Agent` tool'una `subagent_type` olarak verilemez) —
+çağıran hâlâ `general-purpose`, ajan görevini dosyadan okuyor. Ad, dosyayı N5-N11 denetimine sokar
+ve prose'da tek başına geçtiğinde sahibini gösterir; emsal `emlaktoplayici-s-sahibinden`.
+Frontmatter'daki `model` alanı ise fiilen kullanılıyor: `Agent` çağrısına `model: "sonnet"` olarak
+geçirilir, çünkü iş web araması — pahalı model gerekmez.
 
 ## 6. Gizlilik ve telif
 
