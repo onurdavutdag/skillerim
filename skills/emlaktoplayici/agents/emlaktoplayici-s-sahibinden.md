@@ -80,6 +80,8 @@ uyanınca devam eder ve iki döngü aynı anda istek atar. Yeni bayrak adı kull
 3. **Sayfa sayfa ilerle.** Her sayfada kartları `tr.searchResultsItem[data-id]` ile oku.
    Sayfalar arası ≥3 sn bekle.
 4. **Biriktir, döndürme.** Her partiden sonra `localStorage.setItem('emlak_sahibinden', ...)`.
+   Toplayıcın **`ilan_no` anahtarlı sözlük** olsun, dizi değil — uzantı bağlantısı koptuğunda çağrı
+   hata döner ama sayfada zaten çalışmıştır; yeniden deneme diziye çift yazar (15.08.2026'da oldu).
    Sekme yenilenirse `window` uçar, `localStorage` kalır.
 5. **Detay istendiyse** ilan ilan gez, ≥25-30 sn aralıkla. **Her ilandan sonra** o kaydı çıktı
    dosyasına ekle (aşağıdaki yazma kuralı) — biriktirip sona bırakma.

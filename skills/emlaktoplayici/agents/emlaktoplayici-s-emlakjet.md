@@ -10,8 +10,9 @@ diske yazmak. Analiz yapmazsın, Excel üretmezsin, yorum katmazsın.
 
 ## Durum
 
-Liste tarafı **ölçüldü ve çalışıyor** (30/30 kart ayrışıyor). Fiyat filtresi ve detay sayfası
-hâlâ ⚠️ işaretli — bilinmiyor demektir, tahmin değil. O ikisine ihtiyaç duyarsan önce ölç.
+Liste tarafı **ölçüldü ve çalışıyor** (30/30 kart ayrışıyor; 15.08.2026'da 169/169 temiz ayrıştı).
+Fiyat filtresi de artık ölçüldü: **URL'den geçmiyor**, eleme yerelde yapılır. Detay sayfası hâlâ
+⚠️ işaretli — bilinmiyor demektir, tahmin değil; ihtiyaç duyarsan önce ölç.
 
 Bu sitenin en büyük tuzağı `innerText`'tir; aşağıdaki bölümü atlamadan oku.
 
@@ -31,7 +32,8 @@ https://www.emlakjet.com/satilik-daire/<konum>?sayfa=<N>
 | Konum | karttaki `p` — `"Hatay, Arsuz"`, virgülle böl | ✅ |
 | Nitelikler | karttaki `span`'ler; `·` ayraçları atılır, kalanlar kalıba göre eşlenir | ✅ |
 | **Bina yaşı** | Genel olarak **YOK**; yalnız `"SIFIR BİNA"` rozeti varsa yaş = 0 | ✅ |
-| Fiyat filtresi URL şeması | — | ⚠️ **ÖLÇÜLMEDİ** |
+| **Fiyat filtresi** | `?min_fiyat=&max_fiyat=` **sessizce yok sayılıyor** | ⛔ 15.08.2026 ölçüldü — URL'den geçmiyor, eleme yerelde yapılır |
+| Kat | karttaki `"4. Kat"` metni → sayı (`Zemin`=0, `Bodrum`=-1) | ✅ 15.08 — çevrilemezse `null` |
 | Detay sayfası seçicileri | — | ⚠️ **ÖLÇÜLMEDİ** |
 | Hız tavanı | 14.08.2026'da engel görülmedi | ⚠️ ölçülmedi — sahibinden tavanı uygulanır |
 
@@ -98,9 +100,14 @@ Sıkışırsan bu siteyi atlamak, yanlış veri döndürmekten iyidir.
 2. Eksik ölçümleri yukarıdaki gibi tamamla.
 3. Sayfa sayfa ilerle. Sayfalar arası **≥3 sn** bekle.
 4. **Biriktir, döndürme.** Her partide `localStorage.setItem('emlak_emlakjet', ...)`.
-5. **Diske yaz:** biriktirdiğini parça parça `javascript_tool` dönüşüyle al ve `Write`/`Bash` ile
-   dosyaya yaz. **Panoya güvenme** — arka plandaki sekme `Document is not focused` ile düşüyor
-   (15.08.2026 ölçümü, `references/emlaktoplayici-r-tarayici-teknigi.md` §1).
+   Toplayıcın **`ilan_no` anahtarlı sözlük** olsun, dizi değil: uzantı bağlantısı koptuğunda çağrı
+   hata döner ama sayfada **zaten çalışmıştır**; masum bir yeniden deneme diziye 30 kaydı ikinci kez
+   yazar (15.08.2026'da oldu). Sözlük yazımı aynı kazayı zararsız kılar.
+5. **Diske yaz:** biriktirdiğini sayfada bir `<pre>` düğümüne JSON olarak bas, `get_page_text` ile
+   **tek çağrıda** dışarı al (33 KB ölçüldü), sonra `Write`/`Bash` ile dosyaya yaz. `javascript_tool`
+   dönüşü ~1.180 karakterde, `read_page` 100 karakterde kırpar — toplu veri o kanallardan geçmez.
+   **Panoya güvenme:** arka plandaki sekme `Document is not focused` ile düşüyor.
+   (Hepsi 15.08.2026 ölçümü — `references/emlaktoplayici-r-tarayici-teknigi.md` §1.)
 6. **Sekmeni kapat.**
 
 `javascript_tool` çağrıları **40 saniyenin altında** olmalı (CDP timeout 45 sn).

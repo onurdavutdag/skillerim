@@ -11,6 +11,41 @@ Bir sınır yeniden ölçülürse bu dosya güncellenir ve ölçüm tarihi deği
 | Tool çıktısı | ~**1.200 karakter** | Veri `return` ile dışarı taşınmaz — tarayıcıda biriktirilir, sonunda toplu aktarılır |
 | Toplu aktarım | `clipboard.writeText` + PowerShell `Get-Clipboard -Raw` | ⛔ **15.08.2026'da çalışmadı** — aşağı bak |
 | İlerleme kalıcılığı | Sekme yenilenince `window` üzerindeki her şey uçar | Her partide `localStorage`'a yazılır; kaza sonrası kaldığı yerden sürer |
+| Bağlantı kopması | Uzantı bağlantısı koptuğunda çağrı **hata döner ama sayfada çalışmıştır** | Toplayıcı **idempotent** olmalı: kayıt `ilan_no` anahtarıyla eklenir, yeniden deneme çift yazmaz |
+
+> **Neden idempotentlik pazarlık konusu değil:** 15.08.2026 emlakjet koşusunda uzantı bağlantısı 3.
+> sayfada bir kez koptu; hata dönen çağrı sayfada **zaten çalışmıştı** ve masum görünen bir yeniden
+> deneme 30 kaydı sessizce ikinci kez yazdı. Diziye `push` eden bir toplayıcı bunu fark etmez;
+> `ilan_no` anahtarlı sözlüğe yazan toplayıcı için aynı kaza zararsızdır.
+
+### ✅ Toplu aktarımın doğru yolu: `<pre>` + `get_page_text` — 15.08.2026'da ölçüldü
+
+Üç kanalın ölçülmüş taşıma kapasitesi:
+
+| Kanal | Ölçüm | Sonuç |
+|---|---|---|
+| `javascript_tool` dönüşü | ~**1.180 karakter**te kesiliyor | tek ilanlık kayıt taşır, toplu veri taşımaz |
+| `read_page` | metin düğümlerini **100 karaktere** kırpıyor | uzun açıklama için kullanılamaz |
+| **`<pre>` + `get_page_text`** | **33 KB tek çağrıda** çıktı | toplu aktarımın yolu budur |
+
+Kalıp: toplanan veri sayfada bir `<pre>` düğümüne JSON olarak yazılır, sonra `get_page_text` çağrılır.
+hepsiemlak koşusunda ~30 parçalı çıkarma turunu **1 çağrıya** indirdi.
+
+```js
+const el = document.createElement('pre');
+el.id = 'emlak_dump';
+el.textContent = JSON.stringify(Object.values(toplanan));
+document.body.replaceChildren(el);   // sayfayi sadelestir, get_page_text yalniz bunu gorsun
+```
+
+### İki ek hız tekniği (aynı koşuda ölçüldü)
+
+- **Uzun döngüyü `await` etmeden başlat, sonra yokla.** `javascript_tool`'un 45 sn CDP timeout'u
+  böylece hiç devreye girmiyor: döngü `window.__durum` yazar, sonraki kısa çağrılar onu okur.
+- **Aynı sekmede `fetch` + `DOMParser`** — hepsiemlak SSR HTML döndürdüğü için sayfa sayfa gezmeye
+  gerek kalmadı. ⚠️ Bu **sahibinden'de yasaktır** (ölçülmüş blok sebebi, §2). hepsiemlak'ta da bedavaya
+  gelmedi: 72 sayfanın 60. ve 70.'i **HTTP 429** döndü. Yani `fetch` yolu hızlıdır ama hız tavanını
+  ortadan kaldırmaz — büyük envanterde araya duraklama konur.
 
 ### ⛔ Pano yolu güvenilmez — 15.08.2026'da ölçüldü
 
@@ -155,7 +190,14 @@ https://www.emlakjet.com/satilik-daire/<konum>?sayfa=<N>
   `^\d+\+\d+$` oda, `m²` alan, `Kat` kat, `\d{2}\.\d{2}\.\d{4}` tarih, `₺` fiyat).
   Kalıp eşleme sırayla eşlemeden güvenlidir — bir alan eksikse diğerleri kaymaz.
 - **Bina yaşı genel olarak YOK**; yalnız `"SIFIR BİNA"` rozeti varsa yaş = 0
-- ⚠️ **ÖLÇÜLMEDİ:** fiyat filtresi şeması, detay seçicileri, hız tavanı
+- ⛔ **Fiyat filtresi URL'den uygulanamıyor — 15.08.2026'da ölçüldü.** `?min_fiyat=&max_fiyat=` sessizce
+  yok sayılıyor (toplam 169'da kalıyor, 1.850.000 ve 3.550.000 TL'lik ilanlar listede duruyor); sayfada
+  min/max fiyat girdisi de yok, yalnız `ad-type-group-price_trend` kutucukları var.
+  → **Çözüm hepsiemlak'takiyle aynı:** tüm sayfalar çekilir, eleme yerelde yapılır. Envanter küçük
+  (6 sayfa ≈ 2 dk). 15.08 koşusunda 169 ilandan **16'sı** 2.800.000-3.000.000 aralığındaydı.
+- `?sayfa=1` temel URL'e yönlenir — ilk sayfa için parametre eklemeye gerek yok
+- Kart metnindeki `"4. Kat"` sayıya çevrilir (`Zemin` = 0, `Bodrum` = -1); çevrilemiyorsa `null`
+- ⚠️ **ÖLÇÜLMEDİ:** detay seçicileri, hız tavanı
 
 > **Kural:** ⚠️ etiketli hiçbir alan üretimde varsayılmaz. Ajan önce ölçer, ölçtüğünü kendi prompt
 > dosyasına geri yazar, sonra kullanır. Ölçemezse o siteyi "taslak" işaretler ve kısmi teslim eder.

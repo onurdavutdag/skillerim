@@ -27,8 +27,8 @@ https://www.hepsiemlak.com/<konum>-satilik/daire?page=<N>
 
 | Şey | Değer | Durum |
 |---|---|---|
-| Sayfalama | `?page=<N>` | ✅ Hatay: **71 sayfa / 1.704 ilan / 25 kart** |
-| Kart seçici | `article` | ✅ sayfa başına 25 |
+| Sayfalama | `?page=<N>` | ✅ Hatay: **72 sayfa / 1.707 ilan / ~24 kart** (15.08.2026; envanter günden güne oynar, saymayı sen yap) |
+| Kart seçici | `article` | ✅ ~24/sayfa — her `article` ilan kartı değil, sayıyı sabit varsayma |
 | Başlık | `.listingCard__title` | ✅ |
 | Fiyat | `.listingCard__price` (yanında `.listingCard__currency`) | ✅ |
 | Tarih | `.listingCard__date` — `GG/AA/YYYY` | ✅ |
@@ -38,7 +38,7 @@ https://www.hepsiemlak.com/<konum>-satilik/daire?page=<N>
 | Link | karttaki ilk `a[href]` — göreli yol | ✅ |
 | **Fiyat filtresi** | **URL'den uygulanamıyor** (aşağı bak) | ✅ ölçüldü, çözümü var |
 | Detay sayfası seçicileri | — | ⚠️ **ÖLÇÜLMEDİ** (bu site için gerekmiyor) |
-| Hız tavanı | 14.08.2026'da engel görülmedi | ⚠️ ölçülmedi — sahibinden tavanı uygulanır |
+| Hız tavanı | **3 sn yetmedi**: 72 sayfalık taramada sayfa 60 ve 70 **HTTP 429** döndü | ⛔ 15.08.2026 — 40+ sayfalık işlerde araya duraklama koy |
 
 ### Nitelik ayıklama
 
@@ -65,7 +65,9 @@ Sayfada `priceMin` / `priceMax` adlı input'lar var (ayrıca `squareMin`, `squar
 | Sentetik `input`/`change` olayı + "Ara" tıklaması | URL **değişmiyor**, sonuç değişmiyor |
 
 **Çözüm: filtreyi siteye uygulatma.** Tüm sayfaları çek, fiyat/m² elemesini **Python tarafında** yap.
-71 sayfa × 3 sn ≈ 4 dakika — detay sayfasına inmediğin için bu ucuzdur. `meta.filtre` alanına
+72 sayfa × 3 sn ≈ 4 dakika — detay sayfasına inmediğin için bu ucuzdur. Site SSR HTML döndürdüğü
+icin ayni sekmede `fetch` + `DOMParser` da calisir ve cok hizlidir; ama 15.08'de iki sayfa 429 yedi —
+hiz tavanini ortadan kaldirmaz. `meta.filtre` alanına
 istenen aralığı yaz, `meta.notlar`'a `"filtre siteye uygulanamadi, eleme yerelde yapildi"` düş.
 
 Filtreyi gerçek klavye/fare ile (bu ajanın elindeki `computer` aracıyla) uygulamayı denemek serbesttir;
@@ -78,9 +80,13 @@ başarırsan oluşan URL'i **bu dosyaya geri yaz** ve yukarıdaki satırı günc
 2. Eksik ölçümleri yukarıdaki gibi tamamla.
 3. Sayfa sayfa ilerle, kartları oku. Sayfalar arası **≥3 sn** bekle.
 4. **Biriktir, döndürme.** Her partide `localStorage.setItem('emlak_hepsiemlak', ...)`.
-5. **Diske yaz:** biriktirdiğini parça parça `javascript_tool` dönüşüyle al ve `Write`/`Bash` ile
-   dosyaya yaz. **Panoya güvenme** — arka plandaki sekme `Document is not focused` ile düşüyor
-   (15.08.2026 ölçümü, `references/emlaktoplayici-r-tarayici-teknigi.md` §1).
+   Toplayıcın **`ilan_no` anahtarlı sözlük** olsun, dizi değil — uzantı bağlantısı koptuğunda çağrı
+   hata döner ama sayfada zaten çalışmıştır; yeniden deneme diziye çift yazar (15.08.2026'da oldu).
+5. **Diske yaz:** biriktirdiğini sayfada bir `<pre>` düğümüne JSON olarak bas, `get_page_text` ile
+   **tek çağrıda** dışarı al (33 KB ölçüldü), sonra `Write`/`Bash` ile dosyaya yaz. `javascript_tool`
+   dönüşü ~1.180 karakterde, `read_page` 100 karakterde kırpar — toplu veri o kanallardan geçmez.
+   **Panoya güvenme:** arka plandaki sekme `Document is not focused` ile düşüyor.
+   (Hepsi 15.08.2026 ölçümü — `references/emlaktoplayici-r-tarayici-teknigi.md` §1.)
 6. **Sekmeni kapat.**
 
 `javascript_tool` çağrıları **40 saniyenin altında** olmalı (CDP timeout 45 sn).

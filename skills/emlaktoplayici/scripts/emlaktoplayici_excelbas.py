@@ -116,8 +116,19 @@ def tekillestir(ilanlar):
                 kume["siteler"].add(k.get("site"))
                 yerlesti = True
                 break
-            # Uc kriter tutup biri tutmuyorsa BIRLESTIRME - supheyi rapor et.
-            if tutan == 3 and k.get("site") != ref.get("site"):
+            # Kimlik alanlari (ilce + oda + m2) tutup YALNIZ fiyat tutmuyorsa
+            # supheyi rapor et - "ayni daire, iki sitede farkli fiyat" adayi budur.
+            #
+            # Neden yalniz bu kombinasyon: "3/4 tutuyor" demek yetmiyor. Kullanici
+            # dar bir fiyat araligi verdiginde (or. 2,8-3,0M = +-%3,4) fiyat
+            # yakinligi hicbir sey ayirt etmez, oda cogunlukla "3+1"dir ve ilce
+            # birkac tanedir; ucu birden kendiliginden tutar. 15.08.2026 kosusunda
+            # 309 ilanda cift bazinda olculdu: yalniz-oda-farkli 191, yalniz-m2-farkli
+            # 113, yalniz-ilce-farkli 43, yalniz-FIYAT-farkli 9. Ilk uc oreki piyasa
+            # gurultusu, sonuncusu gercek supheydi. Bayragi ona bagliyoruz - yuzlerce
+            # kez yanan bir uyari, raporun "temiz" sinyalini degersizlestirir.
+            if (ayni_ilce and ayni_oda and m2_uyar and not fiyat_uyar
+                    and k.get("site") != ref.get("site")):
                 olasi_tekrar.append((ref.get("ilan_no"), k.get("ilan_no")))
 
         if not yerlesti:
@@ -329,7 +340,7 @@ def ozet_sayfa(wb, kayitlar, metalar, birlesen, olasi_tekrar):
         if m.get("blok_yedi_mi"):
             yaz("BLOK", "{} taramasi blok yedi - veri EKSIK".format(m.get("site")))
     if olasi_tekrar:
-        yaz("Olasi tekrar (birlestirilmedi)", len(olasi_tekrar))
+        yaz("Olasi tekrar - ayni ilce/oda/m2, fiyat farkli (birlestirilmedi)", len(olasi_tekrar))
         for a, b in olasi_tekrar[:50]:
             yaz("", "{} <-> {}".format(a, b))
     if not atlanan_toplam and not olasi_tekrar and not any(m.get("blok_yedi_mi") for m in metalar):

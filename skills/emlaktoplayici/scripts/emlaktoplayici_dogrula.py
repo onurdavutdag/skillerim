@@ -334,6 +334,45 @@ def zincir_dogrula(gecici):
     kontrol("detayeksikbul: detay tamamlaninca EKSIK 0",
             kod == 0 and "EKSIK: 0" in cikti, cikti.strip()[-200:])
 
+    # --- exceloku: xlsx -> kayit JSON -> tekrar xlsx (tam tur)
+    geri = gecici / "geri.json"
+    kod, cikti = kos("emlaktoplayici_exceloku.py", "--xlsx", xlsx, "--cikti", geri)
+    kontrol("exceloku calisti", kod == 0, cikti.strip()[-300:])
+    if kod == 0:
+        veri = json.loads(geri.read_text(encoding="utf-8"))
+        satir_sayisi = load_workbook(xlsx)[wb.sheetnames[0]].max_row - 1
+        kontrol("exceloku tum satirlari okudu",
+                len(veri.get("ilanlar", [])) == satir_sayisi,
+                "{} != {}".format(len(veri.get("ilanlar", [])), satir_sayisi))
+        kontrol("exceloku zorunlu alanlari dolduruyor",
+                all(all(k.get(a) not in (None, "") for a in
+                        ("ilan_no", "site", "baslik", "fiyat", "ilce", "link"))
+                    for k in veri.get("ilanlar", [])),
+                str(veri.get("ilanlar", [{}])[0]))
+        kontrol("exceloku detay alanlarini koruyor",
+                any(k.get("tapu_durumu") for k in veri["ilanlar"])
+                and any(k.get("aciklama") for k in veri["ilanlar"]))
+        # Turkce baslikli tablo da okunmali: "Ilce".lower() birlesen nokta uretir
+        # ve naif eslestirme sutunu sessizce dusurur (ilk kosuda oldu).
+        wbt = load_workbook(xlsx)
+        wst = wbt[wbt.sheetnames[0]]
+        for c in range(1, wst.max_column + 1):
+            if wst.cell(1, c).value == "Ilce":
+                wst.cell(1, c, "İlçe")
+            elif wst.cell(1, c).value == "Ilan Basligi":
+                wst.cell(1, c, "İlan Başlığı")
+        turkce_xlsx = gecici / "turkce.xlsx"
+        wbt.save(turkce_xlsx)
+        kod, cikti = kos("emlaktoplayici_exceloku.py", "--xlsx", turkce_xlsx, "--cikti", gecici / "geri_tr.json")
+        tr = json.loads((gecici / "geri_tr.json").read_text(encoding="utf-8")) if kod == 0 else {}
+        kontrol("exceloku TURKCE baslikli tabloyu da okuyor",
+                kod == 0 and all(k.get("ilce") and k.get("baslik") for k in tr.get("ilanlar", [{}])),
+                cikti.strip()[-200:])
+
+        tur_xlsx = gecici / "tur.xlsx"
+        kod, cikti = kos("emlaktoplayici_excelbas.py", "--kayit", geri, "--cikti", tur_xlsx)
+        kontrol("tam tur: geri okunan JSON tekrar Excel basiyor", kod == 0, cikti.strip()[-300:])
+
     # --- fark
     kod, cikti = kos("emlaktoplayici_farkcikar.py", "--onceki", gecici / "a.json",
                      "--simdiki", gecici / "a.json", "--cikti", gecici / "fark0.json")

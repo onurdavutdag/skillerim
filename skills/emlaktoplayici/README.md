@@ -14,6 +14,14 @@
 > hız tavanı ya canlı ölçülmüştür ya da `⚠️ ÖLÇÜLMEDİ` etiketi taşır. Etiketli alan üretimde kullanılmaz;
 > ajan önce ölçer, sonra kullanır ve ölçtüğünü dosyaya geri yazar.
 >
+> _Son güncelleme: 2026-08-15 10:05 — ikinci gerçek koşunun dersleri işlendi. **sahibinden detay hız
+> tavanı 25-30 sn'ye çıktı** (12-15 sn ile 10. ilanda blok yendi) ve **pano yolu terk edildi**
+> (`clipboard.writeText` arka plandaki sekmede `Document is not focused` veriyor; artık ajan
+> `Write`/`Bash` ile kendi yazıyor). Üç yeni yapı: `references/` dosyaları `<sahip>-r-<konu>.md`
+> kalıbına geçti (N13), `emlaktoplayici_detayeksikbul.py` kaldığı yerden sürdürmeyi deterministik
+> yaptı, `emlaktoplayici_exceloku.py` mevcut bir Excel'i şemaya geri çevirerek eski tabloların yeni
+> taramalarla birleşmesini mümkün kıldı. Öz-denetim 79 → 101 kontrol._
+>
 > _Son güncelleme: 2026-08-14 22:10 — skill kuruldu; sahibinden adaptörü canlı ölçümle tam (detay
 > seçicileri ve 25 alan anahtarı dahil), hepsiemlak ve emlakjet kısmi. İlk gerçek koşuda iki şey öğrenildi
 > ve kayda geçti: **iframe ile detay toplamak bloklanıyor** (`emlaktoplayici-r-tarayici-teknigi.md` §2) ve **sahibinden
@@ -72,6 +80,7 @@ Bu skill'in temel mimari kararıdır ve dört sebebi vardır:
 |---|---|---|---|
 | `emlaktoplayici_excelbas.py` | kayıt JSON (bir veya çok site) | `.xlsx` | Birleştirme + tekilleştirme + üç sayfalı biçimli Excel (Ana, Özet, Künye) |
 | `emlaktoplayici_detayekle.py` | mevcut `.xlsx` + detay JSON | aynı `.xlsx` | Açıklama / Tapu Durumu sütunlarını yerinde ekler; iki kez çalıştırmaya karşı korumalı. Sözlük biçimini bekler, liste biçimini (`{"ilanlar": [...]}`) de kabul edip çevirir |
+| `emlaktoplayici_exceloku.py` | mevcut `.xlsx` | kayıt JSON | Excel'i şemaya geri çevirir (`excelbas`'in tersi); Türkçe ve ASCII başlıkların ikisini de tanır. Eski bir tabloyu yeni taramalarla birleştirmenin tek yolu |
 | `emlaktoplayici_detayeksikbul.py` | mevcut `.xlsx` + 0..n detay JSON | ilan no dizisi (JSON) | Detayı hâlâ eksik ilanları bulur — blok sonrası ikinci geçişin girdisi. `detayekle` yazar, bu okur |
 | `emlaktoplayici_depremskorla.py` | kayıt JSON | kayıt JSON (+skor) | 6 bileşenli 0-10 risk skoru, bileşen sütunları ve `Neden` metni |
 | `emlaktoplayici_mesafehesapla.py` | kayıt JSON | kayıt JSON (+mesafe) | İlçe koordinatından referans noktaya kuş uçuşu mesafe |

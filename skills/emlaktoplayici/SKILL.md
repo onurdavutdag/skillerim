@@ -143,11 +143,12 @@ tekilleştirmede kaç satır birleşti, dikkat çeken bulgular.
 | `references/emlaktoplayici-r-deprem-risk-olcegi.md` | 0-10 puanlama tablosu, ağırlıklar, kaynak künyesi, kullanılamayan kaynaklar, uyarı metni |
 | `scripts/emlaktoplayici_excelbas.py` | Kayıt JSON → xlsx (Ana + Özet + Künye) |
 | `scripts/emlaktoplayici_detayekle.py` | Detay JSON → mevcut xlsx'e Açıklama / Tapu Durumu sütunu ekler |
+| `scripts/emlaktoplayici_exceloku.py` | Mevcut xlsx → kayıt JSON (excelbas'in tersi) — eski tabloyu yeni taramalarla birleştirmek için |
 | `scripts/emlaktoplayici_detayeksikbul.py` | Detayı hâlâ eksik ilan numaralarını basar — blok sonrası ikinci geçişin girdisi |
 | `scripts/emlaktoplayici_depremskorla.py` | Deprem risk skoru + 6 bileşen sütunu + `Neden` |
 | `scripts/emlaktoplayici_mesafehesapla.py` | Referans noktaya kuş uçuşu mesafe |
 | `scripts/emlaktoplayici_farkcikar.py` | İki tarama → yeni / fiyatı değişen / kalkan |
-| `scripts/emlaktoplayici_dogrula.py` | Öz-denetim (94 kontrol): adlandırma N kuralları, varlık bütünlüğü, deprem skoru sınır durumları, sentetik kayıtla uçtan uca zincir, şema koruyucuları |
+| `scripts/emlaktoplayici_dogrula.py` | Öz-denetim (101 kontrol): adlandırma N kuralları, varlık bütünlüğü, deprem skoru sınır durumları, sentetik kayıtla uçtan uca zincir, şema koruyucuları |
 | `assets/hatay_ilce_hasar.json` | Hatay 15 ilçe kesin hasar tespiti sayıları |
 | `assets/ilce_koordinat.json` | İlçe merkez koordinatları |
 | `assets/gem_diri_fay_tr.geojson` | GEM Global Active Faults, Türkiye kırpması (CC-BY) — ilk kullanımda indirilir |
