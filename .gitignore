@@ -1,0 +1,37 @@
+# Claude'un urettigi cikti dosyalari
+output/
+
+# Kisisel medya -- kendi cektigim video/fotograflar hicbir zaman repoya girmez
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.heic
+*.mp3
+*.m4a
+*.wav
+*.aac
+*.srt
+
+# Telif riskli: yayinci PDF'leri, ders notlari, lisansli sablonlar
+*.pdf
+
+# Claude Code oturum dosyalari (worktree kopyalari dahil - repoya girmez)
+.claude/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Isletim sistemi
+Thumbs.db
+desktop.ini
+.DS_Store
