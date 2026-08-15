@@ -7,9 +7,9 @@ onun yerine gecer: dikey Reels orani, xfade gecisleri, arka plan muzigi,
 germeyen en-boy uydurma. Ara dosya yazmaz -- tek filter_complex.
 
 Kullanim:
-    python instagram-icerik_slayt.py ./fotograflar --muzik muzik.mp3
-    python instagram-icerik_slayt.py a.jpg b.jpg c.jpg --oran 4:5 --uydur blur
-    python instagram-icerik_slayt.py ./fotograflar --sure 2.5 --gecis 0.75 --ken-burns
+    python instagramicerik_slayt.py ./fotograflar --muzik muzik.mp3
+    python instagramicerik_slayt.py a.jpg b.jpg c.jpg --oran 4:5 --uydur blur
+    python instagramicerik_slayt.py ./fotograflar --sure 2.5 --gecis 0.75 --ken-burns
 """
 
 import argparse

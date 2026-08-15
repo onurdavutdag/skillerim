@@ -29,11 +29,11 @@ skill'indedir. `instagram-icerik` onu tekrar etmez; yalnız o skill'in Instagram
 | Dosya | Ne yapar |
 |---|---|
 | `SKILL.md` | İş akışı, karar noktaları, slayt komutları |
-| `references/enboy-uydurma.md` | crop / pad / blur karar tablosu ve tam komutlar |
-| `references/slayt-video.md` | Slayt script'inin seçenekleri, elle ffmpeg karşılığı, süre kararı |
-| `references/ses-ve-altyazi.md` | Müzik seviyesi, ducking, `.srt` gömme, Türkçe karakter |
-| `references/platform-olculeri.md` | 2026 ölçü/süre/boyut sınırları, hazır export komutları |
-| `scripts/instagram-icerik_slayt.py` | Fotoğraflardan slayt video — tek ffmpeg geçişi, ara dosya yok |
+| `references/instagram-icerik-r-enboy-uydurma.md` | crop / pad / blur karar tablosu ve tam komutlar |
+| `references/instagram-icerik-r-slayt-video.md` | Slayt script'inin seçenekleri, elle ffmpeg karşılığı, süre kararı |
+| `references/instagram-icerik-r-ses-ve-altyazi.md` | Müzik seviyesi, ducking, `.srt` gömme, Türkçe karakter |
+| `references/instagram-icerik-r-platform-olculeri.md` | 2026 ölçü/süre/boyut sınırları, hazır export komutları |
+| `scripts/instagramicerik_slayt.py` | Fotoğraflardan slayt video — tek ffmpeg geçişi, ara dosya yok |
 
 ## Ön koşul
 

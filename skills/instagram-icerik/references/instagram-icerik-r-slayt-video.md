@@ -13,12 +13,12 @@
 | Geçiş yok; klipleri düz `concat` ile ekler, `xfade` kullanmaz | — |
 | Her fotoğraf için ayrı ara dosya yazar, sonra birleştirir — yavaş | — |
 
-`scripts/instagram-icerik_slayt.py` bunların hepsini tek ffmpeg geçişinde çözer, ara dosya yazmaz.
+`scripts/instagramicerik_slayt.py` bunların hepsini tek ffmpeg geçişinde çözer, ara dosya yazmaz.
 
 ## Seçenekler
 
 ```
-python scripts/instagram-icerik_slayt.py <klasör VEYA dosyalar> [seçenekler]
+python scripts/instagramicerik_slayt.py <klasör VEYA dosyalar> [seçenekler]
 ```
 
 | Seçenek | Varsayılan | Ne yapar |
@@ -27,7 +27,7 @@ python scripts/instagram-icerik_slayt.py <klasör VEYA dosyalar> [seçenekler]
 | `--sure` | `3.0` | Fotoğraf başına saniye |
 | `--gecis` | `0.5` | Geçiş süresi. `0` = sert kesme. `--sure`'den küçük olmalı |
 | `--gecis-tipi` | `fade` | `fade fadeblack fadewhite dissolve slideleft slideright slideup slidedown wipeleft wiperight circleopen circleclose smoothleft smoothright zoomin` |
-| `--uydur` | `crop` | `crop` / `pad` / `blur` — bkz. `enboy-uydurma.md` |
+| `--uydur` | `crop` | `crop` / `pad` / `blur` — bkz. `instagram-icerik-r-enboy-uydurma.md` |
 | `--muzik` | yok | Arka plan müziği (mp3/m4a/wav) |
 | `--muzik-ses` | `1.0` | Seviye çarpanı. `0.5` yarıya indirir |
 | `--fps` | `30` | Kare hızı |

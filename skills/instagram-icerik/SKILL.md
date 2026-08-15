@@ -45,16 +45,16 @@ Kurulumdan sonra **yeni bir kabuk** gerekir. Doğrula: `ffmpeg -version`.
    En-boy oranı, süre ve ses akışının varlığı buradan okunur.
 
 2. **Hedefi seç.** Kullanıcı söylemediyse sor — Reels (9:16), feed dikey (4:5), kare (1:1).
-   Ölçüler: `references/platform-olculeri.md`.
+   Ölçüler: `references/instagram-icerik-r-platform-olculeri.md`.
 
 3. **En-boy uydurma modunu seç.** Kaynak zaten hedef orandaysa dokunma. Değilse `crop` / `pad` /
-   `blur` arasından seç — karar tablosu ve komutlar: `references/enboy-uydurma.md`.
+   `blur` arasından seç — karar tablosu ve komutlar: `references/instagram-icerik-r-enboy-uydurma.md`.
    **Asla `-s 1080x1920` yazma**, görüntüyü gerer.
 
 4. **İşi yap.** Fotoğraf slaytı için aşağıdaki script; video birleştirme/kesme için
    `video-processing-editing`.
 
-5. **Sesi ve altyazıyı ekle.** `references/ses-ve-altyazi.md`.
+5. **Sesi ve altyazıyı ekle.** `references/instagram-icerik-r-ses-ve-altyazi.md`.
 
 6. **Çıktıyı doğrula.** Üretilen dosyayı `ffprobe` ile ölç: çözünürlük, süre ve dosya boyutu
    platform sınırının altında mı.
@@ -62,7 +62,7 @@ Kurulumdan sonra **yeni bir kabuk** gerekir. Doğrula: `ffmpeg -version`.
 ## Fotoğraflardan slayt video
 
 ```bash
-python scripts/instagram-icerik_slayt.py ./fotograflar --muzik muzik.mp3
+python scripts/instagramicerik_slayt.py ./fotograflar --muzik muzik.mp3
 ```
 
 Varsayılan: 9:16 Reels, fotoğraf başına 3 sn, 0,5 sn `fade` geçiş, `crop` uydurma, 30 fps.
@@ -72,20 +72,20 @@ Sık kullanılanlar:
 
 ```bash
 # Yatay fotoğraflar dikey Reels'e: bulanık arka planlı
-python scripts/instagram-icerik_slayt.py ./fotograflar --uydur blur --muzik muzik.mp3
+python scripts/instagramicerik_slayt.py ./fotograflar --uydur blur --muzik muzik.mp3
 
 # Hareketli slayt (yavaş yakınlaşma/uzaklaşma)
-python scripts/instagram-icerik_slayt.py ./fotograflar --ken-burns --sure 2.5
+python scripts/instagramicerik_slayt.py ./fotograflar --ken-burns --sure 2.5
 
 # Feed dikey, kaydırmalı geçiş, belirli sırada
-python scripts/instagram-icerik_slayt.py a.jpg b.jpg c.jpg --oran 4:5 --gecis-tipi slideleft
+python scripts/instagramicerik_slayt.py a.jpg b.jpg c.jpg --oran 4:5 --gecis-tipi slideleft
 
 # Komutu çalıştırmadan gör
-python scripts/instagram-icerik_slayt.py ./fotograflar --kuru
+python scripts/instagramicerik_slayt.py ./fotograflar --kuru
 ```
 
 Toplam süre = `n × --sure − (n−1) × --gecis`. Ayrıntı ve elle ffmpeg karşılığı:
-`references/slayt-video.md`.
+`references/instagram-icerik-r-slayt-video.md`.
 
 ## Çıktı kuralları
 
@@ -99,10 +99,10 @@ Toplam süre = `n × --sure − (n−1) × --gecis`. Ayrıntı ve elle ffmpeg ka
 
 | Dosya | İçerik |
 |---|---|
-| `references/enboy-uydurma.md` | crop / pad / blur karar tablosu, video ve foto için tam komutlar |
-| `references/slayt-video.md` | Slayt script'inin tüm seçenekleri, elle ffmpeg karşılığı, geçiş tipleri |
-| `references/ses-ve-altyazi.md` | Müzik seviyesi, konuşma varken ducking, `.srt` gömme, Instagram'da okunur punto |
-| `references/platform-olculeri.md` | 2026 Instagram ölçü/süre/boyut sınırları ve hazır export komutları |
+| `references/instagram-icerik-r-enboy-uydurma.md` | crop / pad / blur karar tablosu, video ve foto için tam komutlar |
+| `references/instagram-icerik-r-slayt-video.md` | Slayt script'inin tüm seçenekleri, elle ffmpeg karşılığı, geçiş tipleri |
+| `references/instagram-icerik-r-ses-ve-altyazi.md` | Müzik seviyesi, konuşma varken ducking, `.srt` gömme, Instagram'da okunur punto |
+| `references/instagram-icerik-r-platform-olculeri.md` | 2026 Instagram ölçü/süre/boyut sınırları ve hazır export komutları |
 
 ## Kapsam dışı
 

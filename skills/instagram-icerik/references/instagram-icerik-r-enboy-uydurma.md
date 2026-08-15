@@ -113,7 +113,7 @@ ffmpeg -i klip1.mp4 -i klip2.mp4 -filter_complex "\
     -map 0:v -map 1:a -shortest -c:v copy -c:a aac sesli.mp4
   ```
 - Klipler arasına geçiş isteniyorsa `concat` yerine `xfade` kullanılır — kalıp
-  `slayt-video.md` içindeki offset formülünün aynısıdır.
+  `instagram-icerik-r-slayt-video.md` içindeki offset formülünün aynısıdır.
 
 ## Sık yapılan hatalar
 
