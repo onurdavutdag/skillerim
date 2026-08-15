@@ -46,7 +46,7 @@ Tapu Durumu · Kimden · Takas`
 
 ⚠️ **`Bina Yaşı` BANT gelir**, tek sayı değil: `"11-15 arası"`, `"5-10 arası"`, `"31 ve üzeri"`.
 Bandı **olduğu gibi** `bina_yasi_bant` alanına yaz, `bina_yasi` alanını `null` bırak. Banttan tek sayı
-**uydurma** — skorlayıcı bandı kendi çözer (`references/deprem-risk-olcegi.md` §1.1).
+**uydurma** — skorlayıcı bandı kendi çözer (`references/emlaktoplayici-r-deprem-risk-olcegi.md` §1.1).
 Değer düz sayıysa (`"4"`) `bina_yasi`'na yaz, `bina_yasi_bant`'ı `null` bırak.
 
 ## Kırmızı çizgi — detay sayfası
@@ -63,7 +63,7 @@ Detay sayfasına **yalnız üst düzey gerçek gezintiyle** girilir (`navigate` 
 | Paralel döngü | Aralık doğru görünse de fiilî istek hızını katlar — blok sebebi |
 
 Hızlandırmak için kestirme arama. İlan başına iki tool çağrısı (bir `navigate`, bir okuma)
-**kabul edilen maliyettir**. Ayrıntı: `references/tarayici-teknigi.md` §2.
+**kabul edilen maliyettir**. Ayrıntı: `references/emlaktoplayici-r-tarayici-teknigi.md` §2.
 
 **Döngüyü durdurup yeniden başlatıyorsan** durdurma bayrağını geri alma — eski döngü uykudan
 uyanınca devam eder ve iki döngü aynı anda istek atar. Yeni bayrak adı kullan ya da koşu numarası ver.
@@ -77,7 +77,8 @@ uyanınca devam eder ve iki döngü aynı anda istek atar. Yeni bayrak adı kull
    Sayfalar arası ≥3 sn bekle.
 4. **Biriktir, döndürme.** Her partiden sonra `localStorage.setItem('emlak_sahibinden', ...)`.
    Sekme yenilenirse `window` uçar, `localStorage` kalır.
-5. **Detay istendiyse** ilan ilan gez, ≥12-15 sn aralıkla. Her 10 ilanda bir `localStorage`'a yaz.
+5. **Detay istendiyse** ilan ilan gez, ≥12-15 sn aralıkla. Her **10** ilanda `localStorage`'a,
+   her **30** ilanda **diske** yaz (aşağıdaki flush kuralı).
 6. **Diske yaz.** `clipboard.writeText(...)` + PowerShell `Get-Clipboard -Raw | Out-File -Encoding utf8 <yol>`.
    Panoyu ezdiğini çağırana bildir.
 7. **Sekmeni kapat.**
@@ -90,15 +91,23 @@ Tool çıktısı ~1.200 karakterde kesilir — veriyi `return` ile taşımaya ç
 **İşaretler:** HTTP 429 · `/olagan-disi-kullanim` yönlendirmesi · boş kart listesi · CAPTCHA sayfası.
 
 1. **DUR.** Yeniden deneme yapma — ısrar bloğu uzatır.
-2. Kaldığın indeksi `localStorage`'a yaz.
-3. O ana kadar topladığını **diske yaz** — yarım veri de veridir.
-4. `blok_yedi_mi: true` ve `atlanan: <sayı>` ile dön.
+2. O ana kadar topladığını **diske yaz** — yarım veri de veridir.
+3. `blok_yedi_mi: true` ve `atlanan: <sayı>` ile dön.
+
+**İndeks defteri tutma.** İkinci geçişte hangi ilanların kaldığını çağıran hesaplar:
+`emlaktoplayici_detayeksikbul.py` Excel'i ve senin yazdığın detay JSON'unu karşılaştırıp eksik
+numaraları basar. Senin işin diske eksiksiz yazmak; kaldığın yeri hatırlamak değil.
 
 **CAPTCHA çözme. Hesaba girme. Proxy/UA hilesi deneme.**
 
-## Çıktı biçimi
+## Çıktı biçimi — hangi kipte olduğuna dikkat et
 
-Diske yazacağın JSON şeması: `references/excel-sozlesmesi.md` §1. Kısaca:
+İki kip iki ayrı şema yazar. Karıştırırsan sonraki adım (`emlaktoplayici_detayekle.py`) veriyi
+işleyemez ve 40 dakikalık tarama boşa gider — çağıran sana hangi kipte olduğunu söyler.
+
+### Liste kipi (arama sonuçlarını topluyorsan)
+
+Şema: `references/emlaktoplayici-r-excel-sozlesmesi.md` §1. Kısaca:
 
 ```json
 {"meta": {"site":"sahibinden","kategori":"...","konum":"...","arama_url":"...",
@@ -109,6 +118,22 @@ Diske yazacağın JSON şeması: `references/excel-sozlesmesi.md` §1. Kısaca:
               "bina_yasi":null,"kat":null,"toplam_kat":null,"isitma":null,
               "tapu_durumu":null,"aciklama":null}]}
 ```
+
+### Detay kipi (verilen ilan numaralarının detay sayfasına giriyorsan)
+
+Burada `meta`/`ilanlar` **yok**. Dosyanın kendisi **ilan numarasıyla anahtarlanmış bir sözlüktür** —
+`detayekle.py` satırları bu anahtarla eşler:
+
+```json
+{"1327480381": {"tapu_durumu":"Kat Mülkiyetli","aciklama":"...","bina_yasi_bant":"11-15 arası",
+                "bina_yasi":null,"toplam_kat":5,"isitma":"Kombi (Doğalgaz)"},
+ "1334313938": {"tapu_durumu":"Kat İrtifaklı","aciklama":"...","bina_yasi_bant":"5-10 arası",
+                "bina_yasi":null,"toplam_kat":4,"isitma":"Kombi (Doğalgaz)"}}
+```
+
+**Flush kuralı (detay kipi):** her 30 ilanda bir, o ana kadar biriken **tam sözlüğü** aynı dosyanın
+üzerine yaz. Parça dosya üretme, birleştirme yapma — son yazma her zaman tam veridir. 45 dakikalık bir
+iş tek kazada kaybolmasın diye böyle; her flush panoyu ezer, çağıran bunu biliyor.
 
 Alan kuralları:
 - `fiyat` **ayraçsız tam sayı**: `"2.950.000 TL"` → `2950000`

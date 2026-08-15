@@ -3,9 +3,10 @@
 
 Detay alanlari (Aciklama, Tapu Durumu, Bina Yasi, Kat) liste sayfasinda YOKTUR;
 ilan sayfasina tek tek girmeyi gerektirir ve pahalidir (ilan basina >=12-15 sn,
-bkz. references/tarayici-teknigi.md §5). Bu yuzden ayri gecis, ayri script.
+bkz. references/emlaktoplayici-r-tarayici-teknigi.md §5). Bu yuzden ayri gecis, ayri script.
 
 Girdi : mevcut .xlsx  +  detay JSON  { "<ilan no>": {"tapu_durumu": ..., "aciklama": ...} }
+        (liste bicimi de kabul edilir: {"ilanlar": [{"ilan_no": ..., ...}]} -> cevrilir)
 Cikti : ayni .xlsx, yerinde guncellenir (dosya adi DEGISMEZ - guncelleme kurali)
 
 Kullanim:
@@ -33,6 +34,33 @@ EKLENECEK = [
     ("isitma", "Isitma", 16, "Semt"),
     ("aciklama", "Aciklama", 60, "son"),
 ]
+
+
+def sozluge_cevir(ham):
+    """Detay JSON'unu ilan no -> alanlar sozluguna cevirir.
+
+    Beklenen bicim ilan numarasiyla anahtarlanmis sozluktur. Ama tarama ajani
+    liste kipinin semasini ({"meta": ..., "ilanlar": [...]}) aliskanlikla
+    detay kipinde de yazabilir; 45 dakikalik bir tarama sirf bicim yuzunden
+    cope gitmesin diye o bicim de kabul edilir ve burada cevrilir.
+    """
+    if isinstance(ham, dict) and "ilanlar" in ham:
+        ham = ham["ilanlar"]
+    if isinstance(ham, list):
+        cevrilmis = {}
+        for kayit in ham:
+            if not isinstance(kayit, dict):
+                continue
+            no = kayit.get("ilan_no")
+            if no in (None, ""):
+                continue
+            cevrilmis[str(no).strip()] = {k: v for k, v in kayit.items() if k != "ilan_no"}
+        if not cevrilmis:
+            sys.exit("Liste bicimli detay JSON'unda 'ilan_no' tasiyan kayit yok.")
+        return cevrilmis
+    if isinstance(ham, dict):
+        return ham
+    sys.exit("Detay JSON bir sozluk olmali: {'<ilan no>': {...}}")
 
 
 def sutun_indeksi(ws, etiket):
@@ -73,9 +101,7 @@ def main():
     xlsx = Path(a.xlsx)
     if not xlsx.exists():
         sys.exit("Excel yok: {}".format(xlsx))
-    detay = json.loads(Path(a.detay).read_text(encoding="utf-8"))
-    if not isinstance(detay, dict):
-        sys.exit("Detay JSON bir sozluk olmali: {'<ilan no>': {...}}")
+    detay = sozluge_cevir(json.loads(Path(a.detay).read_text(encoding="utf-8")))
 
     try:
         wb = load_workbook(xlsx)

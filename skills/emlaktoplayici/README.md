@@ -5,9 +5,9 @@
 > eklendiğinde, değiştiğinde veya kaldırıldığında bu dosya **aynı değişiklikle** güncellenir.
 >
 > **Bu skill'e özgü ikinci kural:** `SKILL.md` süreç akışının tek doğru kaynağıdır;
-> `references/excel-sozlesmesi.md` kayıt şemasının ve sütun setinin,
-> `references/tarayici-teknigi.md` ölçülmüş tarayıcı sınırlarının,
-> `references/deprem-risk-olcegi.md` puanlamanın, `agents/*.md` ise site adaptörlerinin
+> `references/emlaktoplayici-r-excel-sozlesmesi.md` kayıt şemasının ve sütun setinin,
+> `references/emlaktoplayici-r-tarayici-teknigi.md` ölçülmüş tarayıcı sınırlarının,
+> `references/emlaktoplayici-r-deprem-risk-olcegi.md` puanlamanın, `agents/*.md` ise site adaptörlerinin
 > tek doğru kaynağıdır. Biri değişince diğerleriyle çelişmediği doğrulanır.
 >
 > **Üçüncü kural — ölçülmemiş seçici yazılmaz.** Bir site adaptöründeki her CSS seçici, URL şeması ve
@@ -16,8 +16,8 @@
 >
 > _Son güncelleme: 2026-08-14 22:10 — skill kuruldu; sahibinden adaptörü canlı ölçümle tam (detay
 > seçicileri ve 25 alan anahtarı dahil), hepsiemlak ve emlakjet kısmi. İlk gerçek koşuda iki şey öğrenildi
-> ve kayda geçti: **iframe ile detay toplamak bloklanıyor** (`tarayici-teknigi.md` §2) ve **sahibinden
-> bina yaşını bant veriyor** (`deprem-risk-olcegi.md` §1.1)._
+> ve kayda geçti: **iframe ile detay toplamak bloklanıyor** (`emlaktoplayici-r-tarayici-teknigi.md` §2) ve **sahibinden
+> bina yaşını bant veriyor** (`emlaktoplayici-r-deprem-risk-olcegi.md` §1.1)._
 
 ---
 
@@ -71,7 +71,8 @@ Bu skill'in temel mimari kararıdır ve dört sebebi vardır:
 | Dosya | Girdi | Çıktı | İş |
 |---|---|---|---|
 | `emlaktoplayici_excelbas.py` | kayıt JSON (bir veya çok site) | `.xlsx` | Birleştirme + tekilleştirme + üç sayfalı biçimli Excel (Ana, Özet, Künye) |
-| `emlaktoplayici_detayekle.py` | mevcut `.xlsx` + detay JSON | aynı `.xlsx` | Açıklama / Tapu Durumu sütunlarını yerinde ekler; iki kez çalıştırmaya karşı korumalı |
+| `emlaktoplayici_detayekle.py` | mevcut `.xlsx` + detay JSON | aynı `.xlsx` | Açıklama / Tapu Durumu sütunlarını yerinde ekler; iki kez çalıştırmaya karşı korumalı. Sözlük biçimini bekler, liste biçimini (`{"ilanlar": [...]}`) de kabul edip çevirir |
+| `emlaktoplayici_detayeksikbul.py` | mevcut `.xlsx` + 0..n detay JSON | ilan no dizisi (JSON) | Detayı hâlâ eksik ilanları bulur — blok sonrası ikinci geçişin girdisi. `detayekle` yazar, bu okur |
 | `emlaktoplayici_depremskorla.py` | kayıt JSON | kayıt JSON (+skor) | 6 bileşenli 0-10 risk skoru, bileşen sütunları ve `Neden` metni |
 | `emlaktoplayici_mesafehesapla.py` | kayıt JSON | kayıt JSON (+mesafe) | İlçe koordinatından referans noktaya kuş uçuşu mesafe |
 | `emlaktoplayici_farkcikar.py` | iki kayıt JSON | fark JSON | Yeni / fiyatı değişen / kalkan ilanlar |
@@ -84,9 +85,9 @@ Bu, skill'in çekirdek farkıdır: türedikleri iki tek seferlik script'te veri 
 
 | Dosya | İçerik |
 |---|---|
-| `references/tarayici-teknigi.md` | 14.08.2026'da canlı ölçülen sınırlar: tool süresi/çıktısı, toplu aktarım, site başına hız tavanı, blok davranışı ve toparlanma, ilerleme saklama |
-| `references/excel-sozlesmesi.md` | Kayıt JSON şeması (ajan↔script sözleşmesi), sütun seti, sayfa yapısı, tekilleştirme kuralı, biçim kuralları |
-| `references/deprem-risk-olcegi.md` | 0-10 puanlama tablosu, ağırlıklar, kaynak künyesi, **kullanılamayan kaynaklar**, sert kural, zorunlu uyarı metni |
+| `references/emlaktoplayici-r-tarayici-teknigi.md` | 14.08.2026'da canlı ölçülen sınırlar: tool süresi/çıktısı, toplu aktarım, site başına hız tavanı, blok davranışı ve toparlanma, ilerleme saklama |
+| `references/emlaktoplayici-r-excel-sozlesmesi.md` | Kayıt JSON şeması (ajan↔script sözleşmesi), sütun seti, sayfa yapısı, tekilleştirme kuralı, biçim kuralları |
+| `references/emlaktoplayici-r-deprem-risk-olcegi.md` | 0-10 puanlama tablosu, ağırlıklar, kaynak künyesi, **kullanılamayan kaynaklar**, sert kural, zorunlu uyarı metni |
 
 ### Varlıklar
 
@@ -110,7 +111,7 @@ oturumda bağlamda durur, ara sıra kullanılan bir skill için israftır. Adlar
 | Sayı | İstenen site sayısı kadar (en çok 3) |
 | Başlatma | Hepsi **tek mesajda**, aynı anda |
 | Girdi | Kategori, konum, filtre, hedef ilan sayısı, detay istenip istenmediği |
-| Çıktı (diske) | `output/json/<site> <YYYYAAGG SSDD>.json` — `references/excel-sozlesmesi.md` şeması |
+| Çıktı (diske) | `output/json/<site> <YYYYAAGG SSDD>.json` — `references/emlaktoplayici-r-excel-sozlesmesi.md` şeması |
 | Çıktı (dönen) | Yalnız `{site, ilan_sayisi, dosya_yolu, blok_yedi_mi, atlanan, notlar}` |
 | Kısıt | Tahmin yasak; bulunamayan alan `null`; `0` ≠ `null`; CAPTCHA çözülmez; kendi sekmesinden başkasına dokunmaz |
 | Hata | Düşen ajan yeniden başlatılmaz, `SendMessage` ile sürdürülür |

@@ -315,6 +315,25 @@ def zincir_dogrula(gecici):
             "{} -> {}".format(onceki_sutun_sayisi, wb3[wb3.sheetnames[0]].max_column))
     kontrol("ikinci kosu dolu hucreyi KORUYOR", "yazilan hucre: 0" in cikti, cikti.strip()[-200:])
 
+    # --- detayeksikbul: ikinci gecisin girdisi. Su an yalniz A1'in detayi var.
+    kod, cikti = kos("emlaktoplayici_detayeksikbul.py", "--xlsx", xlsx)
+    kontrol("detayeksikbul calisti", kod == 0, cikti.strip()[-200:])
+    kontrol("detayeksikbul EKSIGI buluyor (Excel'deki dolu hucreden okuyarak)",
+            "EKSIK: 1" in cikti and '"A2"' in cikti, cikti.strip()[-200:])
+
+    # --- ajan liste semasini yazarsa is copre gitmemeli: detayekle onu da cevirir
+    yaz(gecici / "detay_liste.json",
+        {"meta": {"site": "sahibinden"},
+         "ilanlar": [{"ilan_no": "A2", "tapu_durumu": "Kat Irtifakli", "isitma": "Kombi"}]})
+    kod, cikti = kos("emlaktoplayici_detayekle.py", "--xlsx", xlsx,
+                     "--detay", gecici / "detay_liste.json")
+    kontrol("detayekle LISTE bicimini de kabul ediyor",
+            kod == 0 and "yazilan hucre: 2" in cikti, cikti.strip()[-200:])
+
+    kod, cikti = kos("emlaktoplayici_detayeksikbul.py", "--xlsx", xlsx)
+    kontrol("detayeksikbul: detay tamamlaninca EKSIK 0",
+            kod == 0 and "EKSIK: 0" in cikti, cikti.strip()[-200:])
+
     # --- fark
     kod, cikti = kos("emlaktoplayici_farkcikar.py", "--onceki", gecici / "a.json",
                      "--simdiki", gecici / "a.json", "--cikti", gecici / "fark0.json")

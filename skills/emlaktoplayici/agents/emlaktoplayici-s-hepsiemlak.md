@@ -98,7 +98,7 @@ Tool çıktısı ~1.200 karakterde kesilir — veriyi `return` ile taşımaya ç
 
 ## Çıktı biçimi
 
-Şema: `references/excel-sozlesmesi.md` §1. `site` alanı **`"hepsiemlak"`**.
+Şema: `references/emlaktoplayici-r-excel-sozlesmesi.md` §1. `site` alanı **`"hepsiemlak"`**.
 
 Alan kuralları:
 - `fiyat` **ayraçsız tam sayı**: `"2.950.000 TL"` → `2950000`

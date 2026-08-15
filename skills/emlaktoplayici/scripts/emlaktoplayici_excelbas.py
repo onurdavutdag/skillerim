@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tarama JSON'larini tek bir filtrelenebilir Excel dosyasina basar.
 
-Girdi : bir veya daha cok tarama JSON'u (references/excel-sozlesmesi.md §1 semasi)
+Girdi : bir veya daha cok tarama JSON'u (references/emlaktoplayici-r-excel-sozlesmesi.md §1 semasi)
 Cikti : uc sayfali .xlsx  ->  Ana | Ozet | Kunye
 
 Kullanim:
@@ -94,7 +94,7 @@ def _yakin(a, b, oran):
 
 
 def tekillestir(ilanlar):
-    """Ayni daire birden cok sitede olabilir. excel-sozlesmesi.md §5 kurali.
+    """Ayni daire birden cok sitede olabilir. emlaktoplayici-r-excel-sozlesmesi.md §5 kurali.
 
     Doner: (birlesik_kayitlar, birlesen_sayisi, olasi_tekrarlar)
     """

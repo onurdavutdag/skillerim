@@ -117,7 +117,7 @@ Başlık satırı: dolgu `1F3864`, beyaz kalın yazı, ortalı, yükseklik 26.
 - Fiyat ve TL/m² dağılımı (min, çeyrekler, medyan, maks)
 - Kaynak site başına ilan sayısı + tekilleştirmede birleşen satır sayısı
 - **Kapsam uyarıları:** atlanan ilan, blok yiyen site, "olası tekrar" işaretli çiftler
-- Deprem skoru varsa: skor bandı dağılımı + **zorunlu uyarı metni** (`deprem-risk-olcegi.md` §5)
+- Deprem skoru varsa: skor bandı dağılımı + **zorunlu uyarı metni** (`emlaktoplayici-r-deprem-risk-olcegi.md` §5)
 
 ### Sayfa "Künye"
 

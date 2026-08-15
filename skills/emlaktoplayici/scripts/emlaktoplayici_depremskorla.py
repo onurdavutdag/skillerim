@@ -2,9 +2,9 @@
 """Her ilana 0-10 deprem risk skoru ve 6 bilesen sutunu ekler.
 
 Olcek, agirliklar, kaynak kunyesi ve ZORUNLU uyari metni:
-    references/deprem-risk-olcegi.md
+    references/emlaktoplayici-r-deprem-risk-olcegi.md
 
-Girdi : kayit JSON (excel-sozlesmesi.md §1)
+Girdi : kayit JSON (emlaktoplayici-r-excel-sozlesmesi.md §1)
 Cikti : ayni kayit JSON + her ilanda "deprem": {skor, guven, bilesenler, neden}
 
 Kullanim:
