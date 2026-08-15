@@ -9,28 +9,39 @@ Bir sınır yeniden ölçülürse bu dosya güncellenir ve ölçüm tarihi deği
 |---|---|---|
 | `javascript_tool` süresi | **45 sn** CDP timeout | Her çağrı <40 sn tasarlanır. Uzun toplama tek çağrıya sığdırılmaz, parçalanır |
 | Tool çıktısı | ~**1.200 karakter** | Veri `return` ile dışarı taşınmaz — tarayıcıda biriktirilir, sonunda toplu aktarılır |
-| Toplu aktarım | `clipboard.writeText` + PowerShell `Get-Clipboard -Raw` | Çalışır. **Panoyu ezer** — kullanıcıya önceden söylenir |
+| Toplu aktarım | `clipboard.writeText` + PowerShell `Get-Clipboard -Raw` | ⛔ **15.08.2026'da çalışmadı** — aşağı bak |
 | İlerleme kalıcılığı | Sekme yenilenince `window` üzerindeki her şey uçar | Her partide `localStorage`'a yazılır; kaza sonrası kaldığı yerden sürer |
 
-### Toplu aktarım kalıbı
+### ⛔ Pano yolu güvenilmez — 15.08.2026'da ölçüldü
+
+Detay taraması sırasında hem `navigator.clipboard.writeText(...)` hem de yedek olarak
+`document.execCommand('copy')` **`Document is not focused`** ile düştü. Sekme arka planda olduğu için
+sayfa panoya yazma iznini alamıyor; otomasyon sekmesi neredeyse her zaman arka plandadır. Yani bu yol
+"bazen çalışan" değil, bu iş için **yapısal olarak yanlış**.
+
+**Yerine: ilan başına küçük dönüş + ajanın kendi yazması.** Toplanan kayıt tarayıcıda biriktirilmez,
+her ilanda `javascript_tool` dönüşüyle **tek ilanlık kompakt JSON** alınır (~1.200 karakter sınırının
+altında kalır) ve ajan onu `Write`/`Bash` ile diskteki sözlüğe ekler. Ölçek sorunu yok: zaten ilan
+başına 25-30 saniye bekleniyor, bir tool çağrısı daha maliyet değil.
+
+Açıklama uzunsa dönüş sınırını aşabilir; o zaman açıklama tek başına ikinci bir çağrıyla, gerekiyorsa
+parça parça alınır (`slice`).
 
 ```js
-// biriktir (her partide)
-localStorage.setItem('emlak_ilanlar', JSON.stringify(hepsi));
-// aktar (sonunda)
-navigator.clipboard.writeText(localStorage.getItem('emlak_ilanlar'));
+// ilan sayfasindayken: tek ilanlik kompakt kayit dondur
+JSON.stringify({ilan_no, tapu_durumu, bina_yasi_bant, toplam_kat, isitma,
+                aciklama: aciklama.slice(0, 900)})
 ```
 
-```powershell
-Get-Clipboard -Raw | Out-File -Encoding utf8 "output\json\<site> <YYYYAAGG SSDD>.json"
-```
+`localStorage` yine de yazılır (sekme yenilenirse kaza kurtarma), ama **birincil kanal değildir** —
+diske yazan taraf ajandır.
 
 ## 2. Site başına hız tavanı
 
 | Site | İşlem | Ölçüm | Kural |
 |---|---|---|---|
 | **sahibinden** | liste sayfası | 3-5 sn arayla sorunsuz | ≥3 sn bekle, `pagingSize=50` ile sayfa sayısını azalt |
-| **sahibinden** | detay sayfası | `fetch` ile **5. istekte HTTP 429**; ısrar edilince oturum `/olagan-disi-kullanim`'a düştü | **XHR/`fetch` kullanılmaz.** Gerçek gezinti, **≥12-15 sn** + rastgele sapma |
+| **sahibinden** | detay sayfası | `fetch` ile **5. istekte HTTP 429**; ısrar edilince oturum `/olagan-disi-kullanim`'a düştü. 15.08.2026: gerçek gezinti + 12,5-16,5 sn aralıkla bile **10. ilanda blok** | **XHR/`fetch` kullanılmaz.** Gerçek gezinti, **≥25-30 sn** + rastgele sapma |
 | **hepsiemlak** | liste | 14.08.2026'da engel görülmedi | sahibinden tavanı uygulanır (temkinli varsayılan) |
 | **emlakjet** | liste | 14.08.2026'da engel görülmedi | aynı |
 
@@ -77,6 +88,21 @@ beklenmedik CAPTCHA sayfası.
 5. **~30 dakika** sonra devam edilebilir (ölçülmedi, temkinli tahmin — bunu kullanıcıya böyle söyle).
 
 **CAPTCHA çözülmez.** Hesaba girilmez. Blok aşmak için proxy/UA hilesi denenmez.
+
+### 15.08.2026 koşusu — 12-15 sn tavanı yetmedi
+
+14.08 akşamı blok yendikten ~11 saat sonra, kuralına harfiyen uyan bir geçiş denendi: yalnız `navigate`
+ile üst düzey gezinti, iframe yok, fetch yok, tek ajan, ölçülen aralık 12,5-16,5 sn. **10. ilanda
+(`1291619981`) yine `/olagan-disi-kullanim`.** İlk 9 ilan eksiksiz toplandı (altı alanın altısı da dolu).
+
+Çıkarım: 12-15 sn tavanı **detay sayfası için yeterli değil** — 14.08'de ölçülen o değer liste
+sayfasından türetilmişti ve detay tarafında iki kez sınandı, ikisinde de blok geldi. Sayaç ayrıca
+oturumlar arasında sıfırlanmıyor olabilir (bir gün önceki blok izi taşınıyor).
+
+**Sonraki geçişin kuralı:** aralık **25-30 sn** + rastgele sapma, her 10 ilanda bir ~60 sn ek duraklama,
+blok gelirse **en az 2 saat** beklenir (30 dk yetmedi — 11 saat sonra bile 10 ilanda düştü, yani asıl
+değişken bekleme değil **hız** olabilir). 141 ilan bu tempoda ~70-80 dakikadır; süre kullanıcıya baştan
+söylenir ve bölünerek koşulabilir.
 
 ## 4. Sayfalama ve seçiciler
 

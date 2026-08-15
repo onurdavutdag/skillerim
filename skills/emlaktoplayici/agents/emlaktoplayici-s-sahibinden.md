@@ -52,7 +52,11 @@ Değer düz sayıysa (`"4"`) `bina_yasi`'na yaz, `bina_yasi_bant`'ı `null` bır
 ## Kırmızı çizgi — detay sayfası
 
 Detay sayfasına **yalnız üst düzey gerçek gezintiyle** girilir (`navigate` aracı).
-İlan başına **≥12-15 saniye** + rastgele sapma. 150 ilan ≈ 40 dakika — çağırana baştan söyle.
+İlan başına **≥25-30 saniye** + rastgele sapma, her 10 ilanda bir ~60 sn ek duraklama.
+150 ilan ≈ 75-85 dakika — çağırana baştan söyle.
+
+> 15.08.2026'da 12,5-16,5 sn aralıkla denendi ve **10. ilanda blok** geldi; 12-15 sn tavanı liste
+> sayfasından türetilmişti, detay tarafında iki kez sınandı, ikisinde de düştü. Aralığı kısaltma.
 
 **Üçü de yasak, üçü de ölçülerek yasaklandı:**
 
@@ -77,10 +81,10 @@ uyanınca devam eder ve iki döngü aynı anda istek atar. Yeni bayrak adı kull
    Sayfalar arası ≥3 sn bekle.
 4. **Biriktir, döndürme.** Her partiden sonra `localStorage.setItem('emlak_sahibinden', ...)`.
    Sekme yenilenirse `window` uçar, `localStorage` kalır.
-5. **Detay istendiyse** ilan ilan gez, ≥12-15 sn aralıkla. Her **10** ilanda `localStorage`'a,
-   her **30** ilanda **diske** yaz (aşağıdaki flush kuralı).
-6. **Diske yaz.** `clipboard.writeText(...)` + PowerShell `Get-Clipboard -Raw | Out-File -Encoding utf8 <yol>`.
-   Panoyu ezdiğini çağırana bildir.
+5. **Detay istendiyse** ilan ilan gez, ≥25-30 sn aralıkla. **Her ilandan sonra** o kaydı çıktı
+   dosyasına ekle (aşağıdaki yazma kuralı) — biriktirip sona bırakma.
+6. **Liste kipinde diske yaz.** Liste verisi tek seferde büyüktür: `localStorage`'da biriktir, sonunda
+   `Write`/`Bash` ile dosyaya yaz. Panoya güvenme (arka plandaki sekme panoya yazamıyor).
 7. **Sekmeni kapat.**
 
 `javascript_tool` çağrıları **40 saniyenin altında** olmalı (CDP timeout 45 sn).
@@ -131,9 +135,16 @@ Burada `meta`/`ilanlar` **yok**. Dosyanın kendisi **ilan numarasıyla anahtarla
                 "bina_yasi":null,"toplam_kat":4,"isitma":"Kombi (Doğalgaz)"}}
 ```
 
-**Flush kuralı (detay kipi):** her 30 ilanda bir, o ana kadar biriken **tam sözlüğü** aynı dosyanın
-üzerine yaz. Parça dosya üretme, birleştirme yapma — son yazma her zaman tam veridir. 45 dakikalık bir
-iş tek kazada kaybolmasın diye böyle; her flush panoyu ezer, çağıran bunu biliyor.
+**Yazma kuralı (detay kipi) — panoya güvenme.** 15.08.2026'da hem `clipboard.writeText` hem
+`document.execCommand('copy')` **`Document is not focused`** ile düştü: otomasyon sekmesi arka planda
+olduğu için sayfa panoya yazamıyor. Bu yol bu iş için yapısal olarak yanlış.
+
+Bunun yerine **her ilanda tek ilanlık kompakt JSON** döndür (tool çıktısı ~1.200 karakterde kesilir,
+açıklamayı gerekiyorsa `slice` ile parçala) ve o kaydı **kendin** `Write`/`Bash` ile çıktı dosyasındaki
+sözlüğe ekle. Dosya her ilandan sonra tamdır; kaza olursa hiçbir şey kaybolmaz, ayrıca ikinci geçişte
+`emlaktoplayici_detayeksikbul.py` kalanları kendi hesaplar.
+
+`localStorage`'a da yazabilirsin (sekme yenilenirse kurtarma), ama **birincil kanal sensin**, tarayıcı değil.
 
 Alan kuralları:
 - `fiyat` **ayraçsız tam sayı**: `"2.950.000 TL"` → `2950000`

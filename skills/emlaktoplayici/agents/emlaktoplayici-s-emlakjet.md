@@ -98,8 +98,9 @@ Sıkışırsan bu siteyi atlamak, yanlış veri döndürmekten iyidir.
 2. Eksik ölçümleri yukarıdaki gibi tamamla.
 3. Sayfa sayfa ilerle. Sayfalar arası **≥3 sn** bekle.
 4. **Biriktir, döndürme.** Her partide `localStorage.setItem('emlak_emlakjet', ...)`.
-5. **Diske yaz:** `clipboard.writeText(...)` + PowerShell `Get-Clipboard -Raw | Out-File -Encoding utf8 <yol>`.
-   Panoyu ezdiğini çağırana bildir.
+5. **Diske yaz:** biriktirdiğini parça parça `javascript_tool` dönüşüyle al ve `Write`/`Bash` ile
+   dosyaya yaz. **Panoya güvenme** — arka plandaki sekme `Document is not focused` ile düşüyor
+   (15.08.2026 ölçümü, `references/emlaktoplayici-r-tarayici-teknigi.md` §1).
 6. **Sekmeni kapat.**
 
 `javascript_tool` çağrıları **40 saniyenin altında** olmalı (CDP timeout 45 sn).

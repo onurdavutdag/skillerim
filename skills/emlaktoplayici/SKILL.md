@@ -32,7 +32,8 @@ Kullanıcıya sor (varsayılanları belirterek, **cevap gelmeden ilerleme**):
 > 2. Kategori ve konum? (ör. satılık daire / Hatay)
 > 3. Fiyat veya başka filtre var mı?
 > 4. **Açıklama + Tapu Durumu** gibi detay sayfası alanları isteniyor mu? *(İstenirse süre ilan başına
->    ~15 sn — 150 ilan ≈ 40 dk. Sebebi `references/emlaktoplayici-r-tarayici-teknigi.md`'de.)*
+>    ~25-30 sn — 150 ilan ≈ 75-85 dk, ve blok riski gerçektir. Sebebi
+>    `references/emlaktoplayici-r-tarayici-teknigi.md` §2'de.)*
 > 5. Deprem risk skoru isteniyor mu?
 > 6. Mesafe hesabı için referans nokta var mı?
 
