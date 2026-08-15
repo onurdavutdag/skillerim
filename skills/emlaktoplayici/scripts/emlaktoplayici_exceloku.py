@@ -41,6 +41,9 @@ BASLIK_ALAN = {
     "bina yasi bandi": "bina_yasi_bant", "bina yaşı bandı": "bina_yasi_bant",
     "toplam kat": "toplam_kat",
     "kat": "kat",
+    "bulundugu kat": "kat", "bulunduğu kat": "kat",  # excelbas'in yazdigi etiket
+    # (deprem blogundaki "Kat" bilesen sutunuyla cakismasin diye excelbas
+    #  bulundugu kati bu adla basar)
     "isitma": "isitma", "isıtma": "isitma",
     "mesafe (km)": "mesafe_km",
     "ilan tarihi": "tarih", "i̇lan tarihi": "tarih",
@@ -55,7 +58,7 @@ TURETILMIS = {"tl/m2", "tl/m²"}
 # "Kat" basligi bu blokta da var; blok varsa "Kat" oraya aittir (asagida ayiklanir).
 DEPREM_BASLIKLARI = {"deprem risk", "guven", "güven", "yonetmelik", "yönetmelik",
                      "ilce hasar", "ilçe hasar", "fay", "pga", "beyan", "neden"}
-BOS_SAYILAN = (None, "", "Belirtilmemis", "Belirtilmemiş", "?")
+BOS_SAYILAN = (None, "", "Belirtilmemis", "Belirtilmemiş")
 
 KUNYE_META = {
     "arama url": "arama_url",
@@ -81,13 +84,21 @@ def anahtar(deger):
 
 
 def sayi(deger):
-    """'2.950.000 TL' / 2950000 / '140' -> int; cozulemezse None."""
+    """'2.950.000 TL' / 2950000 / '140' / '-1' -> int; cozulemezse None.
+
+    Eksi isareti korunur - kat sozlesmede bodrum icin negatiftir; isareti atmak
+    '-1' bodrumu '1. kat' yapar.
+    """
     if deger in BOS_SAYILAN:
         return None
     if isinstance(deger, (int, float)):
         return int(deger)
-    temiz = re.sub(r"[^\d]", "", str(deger))
-    return int(temiz) if temiz else None
+    metin = str(deger).strip()
+    temiz = re.sub(r"[^\d]", "", metin)
+    if not temiz:
+        return None
+    n = int(temiz)
+    return -n if metin.startswith("-") else n
 
 
 def tarihe_cevir(deger):
@@ -152,7 +163,10 @@ def main():
         sys.exit("Dosya Excel'de ACIK olabilir, okunamadi: {}".format(xlsx))
     ws = sayfayi_bul(wb, a.sayfa)
 
-    basliklar = [c.value for c in next(ws.iter_rows(min_row=1, max_row=1))]
+    ilk_satir = next(ws.iter_rows(min_row=1, max_row=1), None)
+    if ilk_satir is None:
+        sys.exit("Sayfa bos, baslik satiri yok: {} / {}".format(xlsx.name, ws.title))
+    basliklar = [c.value for c in ilk_satir]
     kucuk = [anahtar(b) for b in basliklar]
     deprem_var = "deprem risk" in kucuk
 
@@ -201,7 +215,8 @@ def main():
         if il:
             k.setdefault("il", il)
         # Sema sozlesmesi: bulunamayan alan silinmez, null kalir (0 != null).
-        for alan in ("m2_net", "bina_yasi", "bina_yasi_bant", "toplam_kat", "kat",
+        for alan in ("il", "semt", "oda", "m2_brut", "m2_net", "tarih",
+                     "bina_yasi", "bina_yasi_bant", "toplam_kat", "kat",
                      "isitma", "tapu_durumu", "aciklama"):
             k.setdefault(alan, None)
         ilanlar.append(k)

@@ -77,8 +77,10 @@ diske yazan taraf ajandır.
 |---|---|---|---|
 | **sahibinden** | liste sayfası | 3-5 sn arayla sorunsuz | ≥3 sn bekle, `pagingSize=50` ile sayfa sayısını azalt |
 | **sahibinden** | detay sayfası | `fetch` ile **5. istekte HTTP 429**; ısrar edilince oturum `/olagan-disi-kullanim`'a düştü. 15.08.2026: gerçek gezinti + 12,5-16,5 sn aralıkla bile **10. ilanda blok** | **XHR/`fetch` kullanılmaz.** Gerçek gezinti, **≥25-30 sn** + rastgele sapma |
-| **hepsiemlak** | liste | 14.08.2026'da engel görülmedi | sahibinden tavanı uygulanır (temkinli varsayılan) |
-| **emlakjet** | liste | 14.08.2026'da engel görülmedi | aynı |
+| **hepsiemlak** | liste | 3 sn aralıkla 72 sayfada **sayfa 60 ve 70'te HTTP 429** (15.08.2026); aynı iki sayfa ertesi geçişte 5 sn aralıkla temiz | 40+ sayfalık işlerde araya duraklama koy |
+| **hepsiemlak** | **detay** | 15.08.2026: **80 ilan**, 8-10 sn aralık + her 20 ilanda ~30 sn durak, **hiç blok işareti yok** | 8-10 sn; blok işaretinde 25-30 sn'ye çık |
+| **emlakjet** | liste | 14.08 ve 15.08.2026'da engel görülmedi | ≥3 sn yeterli |
+| **emlakjet** | **detay** | 15.08.2026: 16 ilan, sondaj 8-10 sn → kalanı 10-12 sn, **hiç blok işareti yok** | Sondajla başla, temizse hızlan |
 
 > **Neden `fetch` değil gerçek gezinti:** `fetch` ile atılan istek tarayıcının normal gezinti imzasını
 > taşımaz ve arka arkaya çok hızlı gider. Ölçümde beşinci istekte 429 döndü; devam edilince site oturumu
@@ -153,13 +155,14 @@ https://www.sahibinden.com/<kategori>/<konum>?price_min=<n>&price_max=<n>&paging
 - Fiyat filtresi URL parametresiyle çalışır ✓
 - **Bina yaşı listede YOK** → detay gerekir (150 ilan ≈ 40 dk)
 
-### hepsiemlak — ✅ liste tarafı tam ölçüldü (22:0x)
+### hepsiemlak — ✅ liste + detay ölçüldü
 
 ```
 https://www.hepsiemlak.com/<konum>-satilik/daire?page=<N>
 ```
 
-- Hatay: **71 sayfa / 1.704 ilan / 25 kart** per sayfa
+- Hatay: **72 sayfa / 1.707 ilan / ~24 kart** per sayfa (15.08.2026; envanter günden güne oynar,
+  sayıyı ajan kendisi sayar)
 - Kart `article`; alanlar `.listingCard__title`, `.listingCard__price`, `.listingCard__date`,
   `.listingCard__location` (`"Hatay / Arsuz / Karaağaç Şarkonak Mah."`)
 - Nitelikler `.listingCard__spec-item` + `.listingCard__spec-label`:
@@ -167,12 +170,16 @@ https://www.hepsiemlak.com/<konum>-satilik/daire?page=<N>
 - **Bina yaşı KESİN gelir**: `"20 Yaşında"`, `"Sıfır Bina"` — sahibinden'in bandının aksine tam sayı.
   Deprem skoru amaçsa bu site birinci tercihtir.
 - ⛔ **Fiyat filtresi URL'den uygulanamıyor.** `priceMin`/`priceMax` input adları var; URL parametresi
-  olarak verilince **kabul edilip yok sayılıyor** (toplam 1.704'te kalıyor). Sentetik `input`/`change`
+  olarak verilince **kabul edilip yok sayılıyor** (toplam değişmiyor). Sentetik `input`/`change`
   olayı + "Ara" tıklaması da URL'i değiştirmedi.
-  → **Çözüm:** filtreyi siteye uygulatma; tüm sayfaları çek, elemeyi yerelde yap (71 sayfa ≈ 4 dk).
-- ⚠️ **ÖLÇÜLMEDİ:** detay sayfası seçicileri (bu site için gerekmiyor), hız tavanı
+  → **Çözüm:** filtreyi siteye uygulatma; tüm sayfaları çek, elemeyi yerelde yap (72 sayfa ≈ 4-5 dk).
+- ✅ **Detay sayfası ölçüldü (15.08.2026):** spec tablosu `table.property-spec-table tr.spec-item`
+  (`th` = etiket, `td` = değer; `İlan no` / `Tapu Durumu` / `Kat Sayısı` / `Bulunduğu Kat` /
+  `Bina Yaşı` / `Isınma Tipi`), açıklama `.description-content` (`innerText` tam metni verir).
+  Detay hız tavanı: **80 ilan, 8-10 sn + her 20 ilanda ~30 sn durak, hiç blok işareti yok**.
+  Detay yalnız açıklama + toplam kat için gerekir — bina yaşı zaten listede.
 
-### emlakjet — kısmen ölçüldü (22:0x)
+### emlakjet — ✅ liste + detay ölçüldü
 
 ```
 https://www.emlakjet.com/satilik-daire/<konum>?sayfa=<N>
@@ -187,7 +194,8 @@ https://www.emlakjet.com/satilik-daire/<konum>?sayfa=<N>
 - `textContent` de satır sonu vermez, alanlar yapışır. Çözüm **metin bölmek değil, eleman okumak**:
   başlık = `a[href*="/ilan/"]` bağları içinde metni **en uzun** olan (ilki rozet olabiliyor),
   konum = karttaki `p`, nitelikler = `span`'ler (`·` atılır, kalanlar **kalıba göre** eşlenir:
-  `^\d+\+\d+$` oda, `m²` alan, `Kat` kat, `\d{2}\.\d{2}\.\d{4}` tarih, `₺` fiyat).
+  `^\d+(\.\d+)?\+\d+$` oda — `1.5+1` de gelir, `m²` alan, `Kat` kat, `\d{2}\.\d{2}\.\d{4}` tarih,
+  `₺` fiyat).
   Kalıp eşleme sırayla eşlemeden güvenlidir — bir alan eksikse diğerleri kaymaz.
 - **Bina yaşı genel olarak YOK**; yalnız `"SIFIR BİNA"` rozeti varsa yaş = 0
 - ⛔ **Fiyat filtresi URL'den uygulanamıyor — 15.08.2026'da ölçüldü.** `?min_fiyat=&max_fiyat=` sessizce
@@ -197,15 +205,22 @@ https://www.emlakjet.com/satilik-daire/<konum>?sayfa=<N>
   (6 sayfa ≈ 2 dk). 15.08 koşusunda 169 ilandan **16'sı** 2.800.000-3.000.000 aralığındaydı.
 - `?sayfa=1` temel URL'e yönlenir — ilk sayfa için parametre eklemeye gerek yok
 - Kart metnindeki `"4. Kat"` sayıya çevrilir (`Zemin` = 0, `Bodrum` = -1); çevrilemiyorsa `null`
-- ⚠️ **ÖLÇÜLMEDİ:** detay seçicileri, hız tavanı
+- ✅ **Detay sayfası ölçüldü (15.08.2026):** ayrı bir DOM seçicisine gerek yok — `get_page_text`
+  tek çağrıda "İlan Bilgileri" gridini, alt listeyi (Tapu / Isıtma / Kat Sayısı) ve açıklamayı
+  **temiz düz metin** olarak veriyor. Liste kartlarındaki `innerText` tuzağı detay sayfasında **yok**.
+  Yedek DOM yolu: `ul.grid.grid-cols-1 > li > span` çifti, `div.mb-5.grid.grid-cols-2 > div.flex`,
+  açıklama için `h2` "Açıklaması" + `nextElementSibling`. Ayrıntı ajan promptunda.
+- Detay hız tavanı: 16 ilan **9-10 sn** aralıkla, blok yok
 
 > **Kural:** ⚠️ etiketli hiçbir alan üretimde varsayılmaz. Ajan önce ölçer, ölçtüğünü kendi prompt
 > dosyasına geri yazar, sonra kullanır. Ölçemezse o siteyi "taslak" işaretler ve kısmi teslim eder.
 
 ## 5. Neden bu maliyet — detay taramasının matematiği
 
-Liste sayfası ilan başına ~0,1 sn'ye mal olur (50 ilan tek sayfada). Detay sayfası ilan başına
-**≥12-15 sn**'dir — 120-150 kat pahalı.
+Liste sayfası ilan başına ~0,1 sn'ye mal olur (50 ilan tek sayfada). Detay sayfası site başına
+çok farklıdır (üçü de ölçüldü): **sahibinden ≥25-30 sn** (blok riski gerçek, iki denemede de blok),
+**hepsiemlak 8-10 sn**, **emlakjet 9-10 sn** — yani en iyi durumda ~100 kat, sahibinden'de
+~300 kat pahalı.
 
 Sonuç: **detay alanları yalnız gerçekten isteniyorsa toplanır** ve kullanıcıya süresi baştan söylenir.
 hepsiemlak'ta bina yaşı listede geldiği için, deprem skoru asıl amaçsa **önce hepsiemlak taranır** ve

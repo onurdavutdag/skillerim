@@ -48,14 +48,22 @@ FAY_BANTLARI = [(1, 2.0), (3, 1.5), (10, 1.0), (25, 0.5), (float("inf"), 0.0)]
 PGA_BANTLARI = [(0.2, 0.0), (0.4, 0.5), (0.6, 1.0), (float("inf"), 1.5)]
 KAT_BANTLARI = [(3, 0.2), (5, 0.4), (8, 0.7), (float("inf"), 1.0)]
 
-# En agir once - ilk eslesen kazanir.
+# (?!siz) : "agir hasarsiz" gibi metinlerde hasar kokunun hasarsiz'in icinden
+# yakalanmasini engeller. Birden cok beyan varsa EN AGIRI (max puan) alinir.
 BEYAN_KALIPLARI = [
-    (r"agir\s*hasar", 3.0, "agir hasarli beyani", True),
-    (r"orta\s*hasar", 2.5, "orta hasarli beyani", True),
-    (r"az\s*hasar", 0.5, "az hasarli beyani", False),
+    (r"agir\s*hasar(?!siz)", 3.0, "agir hasarli beyani", True),
+    (r"orta\s*hasar(?!siz)", 2.5, "orta hasarli beyani", True),
+    (r"az\s*hasar(?!siz)", 0.5, "az hasarli beyani", False),
     (r"guclendir", -1.0, "guclendirilmis beyani", False),
     (r"hasarsiz", -1.5, "hasarsiz beyani", False),
 ]
+
+# Eslesmenin hemen ardindan gelen olumsuzlama beyani gecersiz kilar:
+# "agir hasar almamistir", "hasar kaydi yoktur", "orta hasarli degildir".
+OLUMSUZLAMA = re.compile(
+    r"\b(almadi|almamis|gormedi|gormemis|olmadi|olmamis|yoktur|yok\b|degil|bulunmam"
+    r"|gerekm|yapilmad|yapilmam)")
+OLUMSUZLAMA_PENCERE = 25  # eslesme sonrasi bakilan karakter sayisi
 
 
 def sadelestir(metin):
@@ -124,6 +132,8 @@ def bilesen_yonetmelik(kayit, bu_yil):
         return None, None
 
     alt, ust = aralik
+    if alt > 150:  # yas degil YIL yazilmis olmali ("2026" gibi) - uydurma, bos birak
+        return None, "bina_yasi={} supheli (yil/yas karismis olabilir), bilesen bos birakildi".format(alt)
     yapim_yeni = bu_yil - alt                                  # olabilecek en yeni
     puan_yeni, etiket_yeni = _yonetmelik_bandi(yapim_yeni)
     if ust is None:
@@ -138,6 +148,8 @@ def bilesen_yonetmelik(kayit, bu_yil):
     if puan_yeni == puan_eski:
         if alt == ust:
             return puan_yeni, "{} yapimi ({})".format(yapim_yeni, etiket_yeni)
+        if yapim_eski is None:  # ucu acik bant ("31 ve uzeri"): en eski yil bilinmiyor
+            return puan_yeni, "en gec {} yapimi ({})".format(yapim_yeni, etiket_yeni)
         return puan_yeni, "{}-{} yapimi ({})".format(yapim_eski, yapim_yeni, etiket_yeni)
 
     puan = max(puan_yeni, puan_eski)
@@ -312,6 +324,8 @@ def bilesen_kat(kayit):
         kat = int(kat)
     except (TypeError, ValueError):
         return None, None
+    if kat <= 0:  # 0/negatif toplam kat anlamsiz veridir - dusuk bina puani verilmez
+        return None, None
     for ust, puan in KAT_BANTLARI:
         if kat <= ust:
             return puan, "{} katli bina".format(kat)
@@ -321,12 +335,29 @@ def bilesen_kat(kayit):
 # ------------------------------------------------------------------- bilesen 6: beyan
 
 def bilesen_beyan(kayit):
-    """Doner: (puan, aciklama, sert_kural_mi)"""
+    """Doner: (puan, aciklama, sert_kural_mi)
+
+    Tum kaliplar taranir, olumsuzlanmis eslesmeler elenir, kalanlardan
+    EN AGIRI (max puan) secilir - olcek dokumani boyle der. Ilk-eslesen
+    yaklasimi "HASARSIZ raporlu, guclendirme gerekmiyor" gibi metinlerde
+    yanlis kalibi donduruyordu.
+    """
     metin = sadelestir("{} {}".format(kayit.get("baslik") or "", kayit.get("aciklama") or ""))
+    adaylar = []
     for kalip, puan, etiket, sert in BEYAN_KALIPLARI:
-        if re.search(kalip, metin):
-            return puan, etiket, sert
-    return 0.0, None, False
+        for m in re.finditer(kalip, metin):
+            devam = metin[m.end():m.end() + OLUMSUZLAMA_PENCERE]
+            # Olumsuzlama ayni cumlecikte aranir: "orta hasarli, guclendirme
+            # yapilmadi" ilaninda "yapilmadi" hasar beyanini DEGIL guclendirmeyi
+            # olumsuzlar - virgul/nokta otesine bakilmaz.
+            devam = re.split(r"[.,;!?·]", devam, 1)[0]
+            if OLUMSUZLAMA.search(devam):
+                continue  # "agir hasar almamistir" sert kurali tetiklemez
+            adaylar.append((puan, etiket, sert))
+            break
+    if not adaylar:
+        return 0.0, None, False
+    return max(adaylar, key=lambda a: a[0])
 
 
 # -------------------------------------------------------------------------- skorlama
@@ -341,7 +372,7 @@ def skorla(kayit, tablolar, bu_yil):
     else:
         merkezden = False
 
-    bilesenler, nedenler = {}, []
+    bilesenler, nedenler, uyarilar = {}, [], []
 
     for ad, (puan, neden) in {
         "yonetmelik": bilesen_yonetmelik(kayit, bu_yil),
@@ -353,6 +384,8 @@ def skorla(kayit, tablolar, bu_yil):
         bilesenler[ad] = puan
         if puan is not None and neden:
             nedenler.append((puan, "{} ({:.1f})".format(neden, puan)))
+        elif puan is None and neden:  # hesaplanamadi ama sebebi kullaniciya soylenmeli
+            uyarilar.append(neden)
 
     beyan_puan, beyan_neden, sert = bilesen_beyan(kayit)
     bilesenler["beyan"] = beyan_puan
@@ -363,8 +396,11 @@ def skorla(kayit, tablolar, bu_yil):
     toplam_bilesen = len(hesaplanan) + 1  # beyan daima hesaplanir
 
     if len(hesaplanan) < EN_AZ_BILESEN:
-        return {"skor": None, "guven": "({}/6)".format(toplam_bilesen),
-                "bilesenler": bilesenler, "neden": "Yetersiz veri"}
+        neden = "Yetersiz veri"
+        if uyarilar:
+            neden += " · " + " · ".join(uyarilar)
+        return {"skor": None, "guven": "({}/6 bilesen)".format(toplam_bilesen),
+                "bilesenler": bilesenler, "neden": neden}
 
     # Eksik bilesen ortalamayla DOLDURULMAZ; var olanlarin azamisine gore olceklenir.
     ham = sum(bilesenler[a] for a in hesaplanan)
@@ -379,10 +415,12 @@ def skorla(kayit, tablolar, bu_yil):
     metin = " · ".join(n for _, n in nedenler[:3])
     if merkezden and (bilesenler["fay"] is not None or bilesenler["pga"] is not None):
         metin += " · [ilce merkezinden]"
+    for u in uyarilar:
+        metin += " · " + u
     if sert:
         metin = "HASAR BEYANI - skor >= {:.0f}'e sabitlendi · ".format(SERT_KURAL_TABAN) + metin
 
-    return {"skor": round(skor, 1), "guven": "({}/6)".format(toplam_bilesen),
+    return {"skor": round(skor, 1), "guven": "({}/6 bilesen)".format(toplam_bilesen),
             "bilesenler": bilesenler, "neden": metin}
 
 
@@ -396,9 +434,13 @@ def main():
                     help="GEM verisini indirmeyi dener degil - fay bileseni bos kalir")
     a = ap.parse_args()
 
-    veri = json_oku(a.kayit)
-    if veri is None:
-        sys.exit("Kayit JSON okunamadi: {}".format(a.kayit))
+    kayit_yolu = Path(a.kayit)
+    if not kayit_yolu.exists():
+        sys.exit("Kayit dosyasi yok: {}".format(a.kayit))
+    try:
+        veri = json.loads(kayit_yolu.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        sys.exit("Kayit JSON bozuk: {} ({})".format(a.kayit, e))
 
     hasar = HasarTablosu()
     fay = FayHatlari(indir=not a.fay_indirme_yok)

@@ -37,7 +37,8 @@ https://www.hepsiemlak.com/<konum>-satilik/daire?page=<N>
 | Nitelik anahtarları | `Kategori · Oda Sayısı · Brüt m² · Bina Yaşı · Kat` | ✅ |
 | Link | karttaki ilk `a[href]` — göreli yol | ✅ |
 | **Fiyat filtresi** | **URL'den uygulanamıyor** (aşağı bak) | ✅ ölçüldü, çözümü var |
-| Detay sayfası seçicileri | — | ⚠️ **ÖLÇÜLMEDİ** (bu site için gerekmiyor) |
+| Detay sayfası seçicileri | Spec tablosu: `table.property-spec-table tr.spec-item` — her satırda `th`=etiket, `td`=değer (`th.textContent.trim()` → `td.textContent.trim()`). Etiketler: `İlan no`, `Tapu Durumu`, `Kat Sayısı` (`"5 Katlı"`), `Bulunduğu Kat` (`"1. Kat"` / `"Zemin Kat"` / `"Bodrum Kat"`), `Bina Yaşı` (`"6 Yaşında"` / `"Sıfır Bina"`), `Isınma Tipi`. Açıklama: `.description-content` (`el.innerText.trim()` — tam metni tek seferde verir, ~330 karakterlik örnekte kırpma yok) | ✅ 15.08.2026 ölçüldü |
+| Detay hız tavanı | Gerçek gezinti (`navigate`), **8-10 sn** aralık + her 20 ilanda ~30 sn durak | ✅ 15.08.2026 ölçüldü — 80 ilan art arda bu tempoyla çekildi, **hiç blok işareti yok** (HTTP 429 / yönlendirme / boş sayfa / CAPTCHA görülmedi) |
 | Hız tavanı | **3 sn yetmedi**: 72 sayfalık taramada sayfa 60 ve 70 **HTTP 429** döndü | ⛔ 15.08.2026 — 40+ sayfalık işlerde araya duraklama koy |
 
 ### Nitelik ayıklama
@@ -103,11 +104,92 @@ Tool çıktısı ~1.200 karakterde kesilir — veriyi `return` ile taşımaya ç
 
 **CAPTCHA çözme. Hesaba girme. Proxy/UA hilesi deneme.**
 
-## Çıktı biçimi
+## Detay kipi — ilan sayfasına girdiğinde
+
+Çağıran sana **hangi kipte** olduğunu söyler. Detay kipinde elinde bir ilan numarası listesi olur
+(`eksik.json`) ve tek işin o ilanların sayfasına girip aşağıdaki alanları okumaktır.
+
+### Neden gerekiyor
+
+Liste sayfası bina yaşını verir ama **açıklamayı ve toplam kat sayısını vermez**. Deprem risk skorunun
+iki bileşeni onlardan gelir: `aciklama` → ilan metni beyanı (-1,5 … +3, hasar beyanı skoru ezer),
+`toplam_kat` → kat bileşeni (0-1). Detaysız hepsiemlak satırı 3 bileşenle skorlanır, detaylı satır 5.
+
+### Toplanacak alanlar
+
+`aciklama` · `tapu_durumu` · `toplam_kat` · `kat` · `isitma` · `bina_yasi`
+
+`bina_yasi` zaten listeden geldi; detayda **doğrula**. Çelişirse **listeden geleni bozma**, detayda
+gördüğünü yaz ve `notlar`'a "N ilanda liste ↔ detay bina yaşı çelişti" düş. Birleştirme script'i
+(`emlaktoplayici_detaybirlestir.py`) dolu alanı korur ve çelişkiyi kendisi raporlar.
+
+### ✅ Seçiciler ÖLÇÜLDÜ — 15.08.2026
+
+Spec tablosu: `table.property-spec-table tr.spec-item` — her satırda `th` = etiket, `td` = değer
+(`th.textContent.trim()` → `td.textContent.trim()`). Görülen etiketler: `İlan no` · `Tapu Durumu` ·
+`Kat Sayısı` (`"5 Katlı"`) · `Bulunduğu Kat` (`"1. Kat"` / `"Zemin Kat"` / `"Bodrum Kat"`) ·
+`Bina Yaşı` (`"6 Yaşında"` / `"Sıfır Bina"`) · `Isınma Tipi`.
+Açıklama: `.description-content` (`el.innerText.trim()` — tam metni tek seferde verir, ~330
+karakterlik örnekte kırpma yok).
+
+Değer çevirileri: `"5 Katlı"` → `toplam_kat=5` · `"1. Kat"` → `kat=1`, `"Zemin Kat"` → `0`,
+`"Bodrum Kat"` → `-1` · `"6 Yaşında"` → `bina_yasi=6`, `"Sıfır Bina"` → `0`. Çevrilemeyen değer
+`null` kalır, ham metin `notlar`'a düşer.
+
+Seçici boş dönüyorsa (sayfa yapısı değişmiş olabilir) tahminle devam etme: yeniden ölç ve
+ölçtüğünü **bu dosyaya geri yaz**.
+
+### Hız — ölçüldü: 8-10 sn
+
+15.08.2026'da **80 ilan** art arda **8-10 sn** aralık + her 20 ilanda ~30 sn durakla çekildi,
+**hiç blok işareti görülmedi** (HTTP 429 / yönlendirme / boş sayfa / CAPTCHA yok).
+
+| Durum | Ne yap |
+|---|---|
+| Normal | **8-10 sn** aralık, her 20 ilanda ~30 sn durakla |
+| Blok işareti geldiyse | **DUR**, topladığını yaz, aralığı **25-30 sn**'ye çıkar, her 10 ilanda ~60 sn durakla |
+| İkinci blok | Dur ve geri dön — ısrar etme |
+
+Fiilî tempoyu ve blok gelip gelmediğini `notlar`'a **rakamla** yaz; skill bakımcısı
+`references/emlaktoplayici-r-tarayici-teknigi.md` §2 tablosunu ondan günceller.
+
+### İlan sayfasına yalnız gerçek gezintiyle gir
+
+`navigate` ile üst düzey gezinti. **`fetch` yok, XHR yok, iframe yok** — üçü de ölçülmüş blok
+sebebidir (`emlaktoplayici-r-tarayici-teknigi.md` §2). Liste tarafında `fetch` + `DOMParser` serbestti;
+**detay tarafında değildir.**
+
+### Yazma kuralı — panoya güvenme
+
+15.08.2026'da hem `clipboard.writeText` hem `document.execCommand('copy')` arka plandaki sekmede
+**`Document is not focused`** ile düştü. Bunun yerine **her ilanda tek ilanlık kompakt JSON** döndür
+(tool çıktısı ~1.200 karakterde kesilir; açıklama uzunsa `slice` ile parçala, gerekirse ikinci çağrıda al)
+ve o kaydı **kendin** `Write`/`Bash` ile çıktı dosyasındaki sözlüğe ekle. Dosya her ilandan sonra tamdır.
+
+**İndeks defteri tutma.** İkinci geçişte hangi ilanların kaldığını çağıran hesaplar
+(`emlaktoplayici_detayeksikbul.py`). Senin işin diske eksiksiz yazmak.
+
+## Çıktı biçimi — hangi kipte olduğuna dikkat et
+
+İki kip **iki ayrı şema** yazar. Karıştırırsan sonraki adım veriyi işleyemez ve saatlerce süren tarama
+boşa gider.
+
+### Liste kipi
 
 Şema: `references/emlaktoplayici-r-excel-sozlesmesi.md` §1. `site` alanı **`"hepsiemlak"`**.
 
-Alan kuralları:
+### Detay kipi
+
+`meta`/`ilanlar` **yok**. Dosyanın kendisi **ilan numarasıyla anahtarlanmış bir sözlüktür**:
+
+```json
+{"12345678": {"tapu_durumu":"Kat Mülkiyetli","aciklama":"...","bina_yasi":20,
+              "toplam_kat":5,"kat":2,"isitma":"Kombi (Doğalgaz)"}}
+```
+
+Dosya adı: `output/json/hepsiemlak detay <YYYYAAGG SSDD>.json`
+
+Alan kuralları (her iki kipte de geçerli):
 - `fiyat` **ayraçsız tam sayı**: `"2.950.000 TL"` → `2950000`
 - `ilan_no` **string**; site ilan no vermiyorsa URL'deki kimliği kullan
 - `tarih` `YYYY-MM-DD`

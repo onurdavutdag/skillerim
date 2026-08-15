@@ -70,8 +70,9 @@ def on_madde(metin, alan):
 def adlandirmayi_dogrula():
     """N kurallari - klasoreditplugin/references/adlandirma-kurali.md.
 
-    Resmi plugin-ad-denetle.py burada KOSMAZ (plugin.json/marketplace.json bekler,
-    emlaktoplayici bagimsiz bir skill'dir), o yuzden denetim buraya tasindi.
+    Resmi plugin-ad-denetle.py'nin --skill kipi bu skill'i de denetler; buradaki
+    kopya, oz-denetimin TEK komutla ve klasoredit kurulu olmayan makinede de
+    kosabilmesi icin durur. Iki denetim celisirse resmi script kazanir.
     """
     print("\n[0] Adlandirma (N kurallari)")
     kok = BURASI.parent
@@ -161,7 +162,7 @@ def deprem_dogrula():
     kontrol("yuksek riskli ilan > dusuk riskli ilan", yuksek["skor"] > dusuk["skor"],
             "{} vs {}".format(yuksek["skor"], dusuk["skor"]))
     kontrol("skorlar 0-10 araliginda", all(0 <= x["skor"] <= 10 for x in (yuksek, dusuk)))
-    kontrol("guven etiketi var", yuksek["guven"].endswith("/6)"), yuksek["guven"])
+    kontrol("guven etiketi var", yuksek["guven"].endswith("/6 bilesen)"), yuksek["guven"])
     kontrol("PGA bileseni BOS (LUT yok)", yuksek["bilesenler"]["pga"] is None)
     # Fay: veri onbellekte VARSA hesaplanir, YOKSA bos kalir - ama asla uydurulmaz.
     # (Onceki bir --ag kosusu ~/.claude/.cache altina indirmis olabilir.)
@@ -190,6 +191,36 @@ def deprem_dogrula():
              aciklama="HASARSIZ raporlu, guclendirme gerekmiyor")
     r = skorla_mod.skorla(k, t, 2026)
     kontrol("hasarsiz beyani skoru DUSURUR", r["bilesenler"]["beyan"] < 0, str(r["bilesenler"]["beyan"]))
+
+    # --- beyan sinir durumlari (olumsuzlama + en agiri secme)
+    print("  -- beyan sinir durumlari --")
+    b = skorla_mod.bilesen_beyan({"baslik": "", "aciklama": "bina agir hasar almamistir, saglamdir"})
+    kontrol("olumsuzlanan 'agir hasar' SERT KURALI TETIKLEMEZ",
+            b[0] == 0.0 and b[2] is False, str(b))
+    b = skorla_mod.bilesen_beyan({"baslik": "", "aciklama": "orta hasarli degildir"})
+    kontrol("olumsuzlanan 'orta hasarli' beyan uretmez", b[0] == 0.0, str(b))
+    b = skorla_mod.bilesen_beyan({"baslik": "", "aciklama": "hasarsiz raporlu daire"})
+    kontrol("'hasarsiz' hasar kaliplarina YAKALANMAZ", b[0] == -1.5 and b[2] is False, str(b))
+    b = skorla_mod.bilesen_beyan({"baslik": "", "aciklama": "az hasarli ama guclendirilmis bina"})
+    kontrol("coklu beyanda EN AGIRI kazanir", b[0] == 0.5, str(b))
+    b = skorla_mod.bilesen_beyan({"baslik": "", "aciklama": "deprem hasar kaydi yoktur"})
+    kontrol("'hasar kaydi yoktur' beyan uretmez", b[0] == 0.0, str(b))
+    b = skorla_mod.bilesen_beyan({"baslik": "", "aciklama": "orta hasarli, guclendirme yapilmadi"})
+    kontrol("olumsuzlama CUMLECIK sinirinda kaliyor (beyan ayakta)",
+            b[0] == 2.5 and b[2] is True, str(b))
+
+    # --- yonetmelik sinir durumlari
+    print("  -- yonetmelik sinir durumlari --")
+    p, n = skorla_mod.bilesen_yonetmelik({"bina_yasi": 2026, "bina_yasi_bant": None}, 2026)
+    kontrol("yil/yas karismasi (bina_yasi=2026) BOS + uyari",
+            p is None and n and "supheli" in n, "{} / {}".format(p, n))
+    p, n = skorla_mod.bilesen_yonetmelik({"bina_yasi": None, "bina_yasi_bant": "51 ve üzeri"}, 2026)
+    kontrol("ucu acik bant Neden metninde 'None' YOK",
+            p == 3.5 and n and "None" not in n, "{} / {}".format(p, n))
+    kontrol("toplam_kat=0 kat bileseni uretmez",
+            skorla_mod.bilesen_kat({"toplam_kat": 0}) == (None, None))
+    kontrol("toplam_kat=-1 kat bileseni uretmez",
+            skorla_mod.bilesen_kat({"toplam_kat": -1}) == (None, None))
 
     # TR harf duyarsizligi: "Kırıkhan" ile "KIRIKHAN" ayni ilceyi bulmali
     a = hasar.puan("Kırıkhan")[0]
@@ -261,7 +292,8 @@ def zincir_dogrula(gecici):
 
     from openpyxl import load_workbook
     wb = load_workbook(xlsx)
-    kontrol("uc sayfa var", set(wb.sheetnames) >= {"Ozet", "Kunye"}, str(wb.sheetnames))
+    kontrol("uc sayfa var", len(wb.sheetnames) == 3 and {"Ozet", "Kunye"} <= set(wb.sheetnames),
+            str(wb.sheetnames))
     ws = wb[wb.sheetnames[0]]
     basliklar = [c.value for c in ws[1]]
     kontrol("zorunlu basliklar yerinde",
@@ -292,15 +324,47 @@ def zincir_dogrula(gecici):
     kontrol("Ozet blok uyarisini iceriyor", "BLOK" in ozet)
     kontrol("Ozet atlanan ilani bildiriyor", "Atlanan ilan" in ozet)
     kontrol("Ozet deprem uyari metnini iceriyor", "ON ELEME" in ozet)
+    kunye = "\n".join(str(c.value) for satir in wb["Kunye"].iter_rows() for c in satir if c.value)
+    kontrol("Kunye deprem uyari metnini iceriyor", "ON ELEME" in kunye)
 
-    # --- detay ekleme
-    yaz(gecici / "detay.json", {"A1": {"tapu_durumu": "Kat Mulkiyetli", "aciklama": "x" * 40000}})
+    # --- tekillestirmede SKORLU kayit kazanir (15.08.2026 duzeltmesi)
+    s1 = ilan("S1", "sahibinden", "Antakya", 2950000, 140, "3+1", tarih="2026-08-12")
+    s1["deprem"] = {"skor": None, "guven": "(2/6 bilesen)", "bilesenler": {}, "neden": "Yetersiz veri"}
+    s2 = ilan("S2", "hepsiemlak", "Antakya", 2950000, 140, "3+1", tarih="2026-08-01")
+    s2["deprem"] = {"skor": 5.0, "guven": "(4/6 bilesen)", "bilesenler": {}, "neden": "test"}
+    b_kayitlar, _, _ = excel_mod.tekillestir([s1, s2])
+    kontrol("birlesmede SKORLU deprem kaydi kazaniyor (daha yeni skorsuza karsi)",
+            len(b_kayitlar) == 1 and (b_kayitlar[0].get("deprem") or {}).get("skor") == 5.0,
+            str([(k.get("deprem") or {}).get("skor") for k in b_kayitlar]))
+
+    # --- olasi tekrar: kimlik tutuyor, fiyat tutmuyor -> birlesmez, raporlanir
+    t1 = ilan("T1", "sahibinden", "Antakya", 2500000, 120, "2+1")
+    t2 = ilan("T2", "emlakjet", "Antakya", 3000000, 120, "2+1")
+    o_kayitlar, _, olasi = excel_mod.tekillestir([t1, t2])
+    kontrol("olasi tekrar BIRLESTIRILMIYOR ama yakalaniyor",
+            len(o_kayitlar) == 2 and len(olasi) == 1, "{} kayit, {} suphe".format(
+                len(o_kayitlar), len(olasi)))
+    yaz(gecici / "olasi.json", paket("sahibinden", [t1]))
+    yaz(gecici / "olasi2.json", paket("emlakjet", [t2]))
+    kod, cikti = kos("emlaktoplayici_excelbas.py", "--kayit", gecici / "olasi.json",
+                     gecici / "olasi2.json", "--cikti", gecici / "olasi.xlsx")
+    if kod == 0:
+        wbo = load_workbook(gecici / "olasi.xlsx")
+        ozet_o = "\n".join(str(c.value) for satir in wbo["Ozet"].iter_rows() for c in satir if c.value)
+        kontrol("Ozet olasi tekrari LISTELIYOR", "Olasi tekrar" in ozet_o and "T1" in ozet_o)
+    else:
+        kontrol("Ozet olasi tekrari LISTELIYOR", False, cikti.strip()[-200:])
+
+    # --- detay ekleme (kat=-1: bodrum, eksi isaretin tum turu sag cikmasi test edilir)
+    yaz(gecici / "detay.json", {"A1": {"tapu_durumu": "Kat Mulkiyetli", "aciklama": "x" * 40000,
+                                       "kat": -1}})
     kod, cikti = kos("emlaktoplayici_detayekle.py", "--xlsx", xlsx, "--detay", gecici / "detay.json")
     kontrol("detayekle calisti", kod == 0, cikti.strip()[-300:])
     if kod == 0:
         wb2 = load_workbook(xlsx)
         b2 = [c.value for c in wb2[wb2.sheetnames[0]][1]]
         kontrol("Aciklama sutunu EN SONDA", b2[-1] == "Aciklama", str(b2[-1]))
+        kontrol("detayekle 'Bulundugu Kat' sutunu acti", "Bulundugu Kat" in b2, str(b2))
         uzun = [wb2[wb2.sheetnames[0]].cell(r, len(b2)).value
                 for r in range(2, wb2[wb2.sheetnames[0]].max_row + 1)]
         kontrol("uzun aciklama kirpildi",
@@ -352,6 +416,9 @@ def zincir_dogrula(gecici):
         kontrol("exceloku detay alanlarini koruyor",
                 any(k.get("tapu_durumu") for k in veri["ilanlar"])
                 and any(k.get("aciklama") for k in veri["ilanlar"]))
+        kontrol("exceloku EKSI kati koruyor (bodrum -1)",
+                any(k.get("kat") == -1 for k in veri["ilanlar"]),
+                str([k.get("kat") for k in veri["ilanlar"]]))
         # Turkce baslikli tablo da okunmali: "Ilce".lower() birlesen nokta uretir
         # ve naif eslestirme sutunu sessizce dusurur (ilk kosuda oldu).
         wbt = load_workbook(xlsx)
@@ -372,6 +439,11 @@ def zincir_dogrula(gecici):
         tur_xlsx = gecici / "tur.xlsx"
         kod, cikti = kos("emlaktoplayici_excelbas.py", "--kayit", geri, "--cikti", tur_xlsx)
         kontrol("tam tur: geri okunan JSON tekrar Excel basiyor", kod == 0, cikti.strip()[-300:])
+        if kod == 0:
+            wbtur = load_workbook(tur_xlsx)
+            btur = [c.value for c in wbtur[wbtur.sheetnames[0]][1]]
+            kontrol("tam turda Bulundugu Kat / Isitma KAYBOLMUYOR",
+                    "Bulundugu Kat" in btur and "Isitma" in btur, str(btur))
 
     # --- fark
     kod, cikti = kos("emlaktoplayici_farkcikar.py", "--onceki", gecici / "a.json",
@@ -389,6 +461,41 @@ def zincir_dogrula(gecici):
     kontrol("1 yeni / 1 degisen / 1 kalkan dogru sayildi",
             kod == 0 and "1 yeni, 1 fiyati degisen, 1 kalkan" in cikti, cikti.strip()[-200:])
 
+    # --- detaybirlestir: detay -> KAYIT JSON -> skor zinciri (SKILL.md Adim 4'un yolu).
+    # Aciklama ve toplam_kat skorlayiciya ancak bu yoldan ulasir - 15.08.2026'da
+    # bu halka yoktu ve tablo hem aciklamasiz hem skorsuz cikti.
+    print("  -- detaybirlestir zinciri --")
+    yaz(gecici / "detay_skor.json",
+        {"A1": {"aciklama": "guzel daire, hasarsiz raporlu", "toplam_kat": 5, "kat": 2,
+                "isitma": "Kombi", "bina_yasi": 13},
+         "A2": {"aciklama": "sahibinden orta hasarli, guclendirme yapilmadi"}})
+    kod, cikti = kos("emlaktoplayici_detaybirlestir.py", "--kayit", gecici / "a.json",
+                     "--detay", gecici / "detay_skor.json", "--cikti", gecici / "birlesik.json")
+    kontrol("detaybirlestir calisti", kod == 0, cikti.strip()[-300:])
+    if kod == 0:
+        bir = json.loads((gecici / "birlesik.json").read_text(encoding="utf-8"))
+        a1 = [k for k in bir["ilanlar"] if k["ilan_no"] == "A1"][0]
+        kontrol("detaybirlestir aciklama + kat + isitma isliyor",
+                a1.get("aciklama") and a1.get("kat") == 2 and a1.get("isitma") == "Kombi",
+                str({x: a1.get(x) for x in ("aciklama", "kat", "isitma")}))
+        kontrol("detaybirlestir DOLU alani koruyor (bina_yasi 12 != detay 13)",
+                a1.get("bina_yasi") == 12, str(a1.get("bina_yasi")))
+        kontrol("detaybirlestir celiskiyi RAPORLUYOR", "CELISKI" in cikti, cikti.strip()[-200:])
+
+        kod, cikti = kos("emlaktoplayici_depremskorla.py", "--kayit", gecici / "birlesik.json",
+                         "--cikti", gecici / "birlesik_skorlu.json", "--fay-indirme-yok")
+        kontrol("detay sonrasi depremskorla calisti", kod == 0, cikti.strip()[-200:])
+        if kod == 0:
+            sk = json.loads((gecici / "birlesik_skorlu.json").read_text(encoding="utf-8"))["ilanlar"]
+            a1s = [k for k in sk if k["ilan_no"] == "A1"][0]["deprem"]
+            a2s = [k for k in sk if k["ilan_no"] == "A2"][0]["deprem"]
+            kontrol("skorlayici detaydan gelen BEYANI goruyor (hasarsiz -1.5)",
+                    a1s["bilesenler"]["beyan"] == -1.5, str(a1s["bilesenler"]))
+            kontrol("skorlayici detaydan gelen TOPLAM KATI goruyor",
+                    a1s["bilesenler"]["kat"] is not None, str(a1s["bilesenler"]))
+            kontrol("detaydan gelen 'orta hasarli' SERT KURALI tetikliyor",
+                    a2s["skor"] is not None and a2s["skor"] >= 8.0, str(a2s["skor"]))
+
 
 def sema_dogrula(gecici):
     print("\n[4] Sema koruyuculari")
@@ -405,9 +512,76 @@ def sema_dogrula(gecici):
     kontrol("bozuk JSON'da anlamli hata veriyor", kod != 0 and "Bozuk JSON" in cikti,
             cikti.strip()[-160:])
 
+    metin_fiyat = paket("sahibinden", [{"ilan_no": "Y", "site": "sahibinden", "baslik": "y",
+                                        "fiyat": "2.950.000 TL", "ilce": "Antakya",
+                                        "link": "http://z"}])
+    yaz(gecici / "metinfiyat.json", metin_fiyat)
+    kod, cikti = kos("emlaktoplayici_excelbas.py", "--kayit", gecici / "metinfiyat.json",
+                     "--cikti", gecici / "olmaz3.xlsx")
+    kontrol("metin fiyati anlamli hatayla REDDEDIYOR (TypeError degil)",
+            kod != 0 and "sayi degil" in cikti and "Traceback" not in cikti, cikti.strip()[-160:])
+
+    kod, cikti = kos("emlaktoplayici_excelbas.py", "--kayit", gecici / "eslesmez*.json",
+                     "--cikti", gecici / "olmaz4.xlsx")
+    kontrol("genislememis glob deseninde anlamli hata (PowerShell yolu)",
+            kod != 0 and "eslesmedi" in cikti, cikti.strip()[-160:])
+
+    # Bozuk JSON diger scriptlerde de traceback DEGIL anlamli hata vermeli.
+    xlsx_var = gecici / "cikti.xlsx"  # zincir testinden kalan gercek dosya
+    kod, cikti = kos("emlaktoplayici_detayekle.py", "--xlsx", xlsx_var,
+                     "--detay", gecici / "bozuk.json")
+    kontrol("detayekle bozuk JSON'u anlamli reddediyor",
+            kod != 0 and "bozuk" in cikti.lower() and "Traceback" not in cikti, cikti.strip()[-160:])
+    kod, cikti = kos("emlaktoplayici_detayeksikbul.py", "--xlsx", xlsx_var,
+                     "--detay", gecici / "bozuk.json")
+    kontrol("detayeksikbul bozuk JSON'u anlamli reddediyor",
+            kod != 0 and "bozuk" in cikti.lower() and "Traceback" not in cikti, cikti.strip()[-160:])
+    kod, cikti = kos("emlaktoplayici_farkcikar.py", "--onceki", gecici / "bozuk.json",
+                     "--simdiki", gecici / "bozuk.json", "--cikti", gecici / "olmaz5.json")
+    kontrol("farkcikar bozuk JSON'u anlamli reddediyor",
+            kod != 0 and "Bozuk JSON" in cikti and "Traceback" not in cikti, cikti.strip()[-160:])
+    yaz(gecici / "yanlis_sema.json", {"foo": 1})
+    kod, cikti = kos("emlaktoplayici_farkcikar.py", "--onceki", gecici / "yanlis_sema.json",
+                     "--simdiki", gecici / "yanlis_sema.json", "--cikti", gecici / "olmaz6.json")
+    kontrol("farkcikar yanlis semayi sessizce 'hepsi yeni' SAYMIYOR",
+            kod != 0 and "ilanlar" in cikti, cikti.strip()[-160:])
+    kod, cikti = kos("emlaktoplayici_mesafehesapla.py", "--kayit", gecici / "bozuk.json",
+                     "--cikti", gecici / "olmaz7.json", "--referans", "Antakya")
+    kontrol("mesafehesapla bozuk JSON'u anlamli reddediyor",
+            kod != 0 and "bozuk" in cikti.lower() and "Traceback" not in cikti, cikti.strip()[-160:])
+    kod, cikti = kos("emlaktoplayici_depremskorla.py", "--kayit", gecici / "bozuk.json",
+                     "--cikti", gecici / "olmaz8.json", "--fay-indirme-yok")
+    kontrol("depremskorla bozuk ile eksik dosyayi AYIRT ediyor",
+            kod != 0 and "bozuk" in cikti.lower(), cikti.strip()[-160:])
+
+
+def dokuman_sayisi_dogrula():
+    """README ve SKILL.md'deki denetim sayisi GERCEK sayiyla esit mi?
+
+    Sayi iki kez bayatladi (79 -> 89 -> 101 derken gercek 102 idi). Kontrol
+    buraya alindi: sayi bayatlarsa oz-denetim DUSER, bakim kurali kendini zorlar.
+    Not: bu fonksiyondaki iki kontrol de toplama dahildir; --ag'in +2'si degildir
+    (dokumanlar varsayilan kosunun sayisini yazar).
+    """
+    print("\n[5] Dokuman-sayi esitligi")
+    kok = BURASI.parent
+    beklenen = len(GECTI) + len(KALDI) + 2  # asagidaki iki kontrol de sayilir
+
+    readme = (kok / "README.md").read_text(encoding="utf-8")
+    m = re.search(r"\*\*(\d+)\s+denetim\*\*", readme)
+    kontrol("README denetim sayisi guncel ({})".format(beklenen),
+            bool(m) and int(m.group(1)) == beklenen,
+            "{} != {}".format(m.group(1) if m else "bulunamadi", beklenen))
+
+    skill = (kok / "SKILL.md").read_text(encoding="utf-8")
+    m = re.search(r"(\d+)\s+kontrol", skill)
+    kontrol("SKILL.md kontrol sayisi guncel ({})".format(beklenen),
+            bool(m) and int(m.group(1)) == beklenen,
+            "{} != {}".format(m.group(1) if m else "bulunamadi", beklenen))
+
 
 def ag_dogrula():
-    print("\n[5] Ag testi (--ag)")
+    print("\n[6] Ag testi (--ag)")
     fay = skorla_mod.FayHatlari(indir=True)
     kontrol("GEM diri fay verisi indi ve yuklendi", bool(fay.parcalar), fay.durum)
     if fay.parcalar:
@@ -430,6 +604,7 @@ def main():
         gecici = Path(td)
         zincir_dogrula(gecici)
         sema_dogrula(gecici)
+    dokuman_sayisi_dogrula()
     if a.ag:
         ag_dogrula()
 

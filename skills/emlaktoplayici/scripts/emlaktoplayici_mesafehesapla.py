@@ -46,8 +46,13 @@ def main():
     ap.add_argument("--lon", type=float)
     a = ap.parse_args()
 
-    merkezler = (json.loads((VARLIK / "ilce_koordinat.json").read_text(encoding="utf-8"))
-                 .get("ilceler") or {})
+    koordinat_yolu = VARLIK / "ilce_koordinat.json"
+    if not koordinat_yolu.exists():
+        sys.exit("Varlik dosyasi yok: {}".format(koordinat_yolu))
+    try:
+        merkezler = json.loads(koordinat_yolu.read_text(encoding="utf-8")).get("ilceler") or {}
+    except json.JSONDecodeError as e:
+        sys.exit("Varlik JSON bozuk: {} ({})".format(koordinat_yolu, e))
     indeks = {sadelestir(k): v for k, v in merkezler.items()}
 
     if a.lat is not None and a.lon is not None:
@@ -61,7 +66,13 @@ def main():
     else:
         sys.exit("--referans ya da --lat/--lon vermelisin.")
 
-    veri = json.loads(Path(a.kayit).read_text(encoding="utf-8"))
+    kayit_yolu = Path(a.kayit)
+    if not kayit_yolu.exists():
+        sys.exit("Kayit dosyasi yok: {}".format(kayit_yolu))
+    try:
+        veri = json.loads(kayit_yolu.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        sys.exit("Kayit JSON bozuk: {} ({})".format(kayit_yolu, e))
     ilanlar = veri.get("ilanlar") or []
 
     hesaplanan = yaklasik = 0
@@ -70,7 +81,9 @@ def main():
         if lat is None or lon is None:
             m = indeks.get(sadelestir(k.get("ilce") or ""))
             if not m:
+                # Anahtar her kayitta bulunsun - kayitlar arasi sema tutarliligi.
                 k["mesafe_km"] = None
+                k["mesafe_yaklasik"] = None
                 continue
             lat, lon, yak = m["lat"], m["lon"], True
         k["mesafe_km"] = round(haversine(lat, lon, hedef[0], hedef[1]), 1)

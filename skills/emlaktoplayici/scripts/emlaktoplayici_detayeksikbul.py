@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Detayi HENUZ toplanmamis ilan numaralarini bulur (ikinci gecisin girdisi).
 
-Detay taramasi ilan basina >=12-15 sn suren, blok yiyebilen uzun bir istir
-(bkz. references/emlaktoplayici-r-tarayici-teknigi.md §2-3). Blok gelince tarama
+Detay taramasi ilan basina 8-30 sn suren (siteye gore degisir), blok yiyebilen
+uzun bir istir (bkz. references/emlaktoplayici-r-tarayici-teknigi.md §2-3). Blok gelince tarama
 yarida kalir ve ikinci gecise "hangi ilanlar kaldi?" sorusuyla baslanir. Bu soru
 tarama ajaninin kendi localStorage defterine BIRAKILMAZ - ajan dusmus olabilir,
 sekme yenilenmis olabilir, iki ayri gecis birikmis olabilir. Cevap her zaman
@@ -40,9 +40,21 @@ BOS_SAYILAN = (None, "", "Belirtilmemis", "Belirtilmemiş")
 DETAY_ALANLARI = ("tapu_durumu", "aciklama", "bina_yasi", "bina_yasi_bant", "toplam_kat", "isitma")
 
 
+def _anahtar(deger):
+    """Basligi karsilastirilabilir hâle indirger (exceloku.anahtar ile ayni mantik).
+
+    Turkce tuzagi: "İlan No".lower() -> "i" + U+0307 (birlesen nokta); nokta
+    atilmadan "ILAN NO" / "İlan No" / "Ilan No" birbirini bulamaz.
+    """
+    if deger is None:
+        return ""
+    return str(deger).strip().lower().replace("̇", "")
+
+
 def sutun_indeksi(ws, *etiketler):
+    istenen = {_anahtar(e) for e in etiketler}
     for c in range(1, ws.max_column + 1):
-        if ws.cell(1, c).value in etiketler:
+        if _anahtar(ws.cell(1, c).value) in istenen:
             return c
     return None
 
@@ -65,7 +77,10 @@ def detaylari_oku(yollar):
         p = Path(yol)
         if not p.exists():
             sys.exit("Detay JSON yok: {}".format(p))
-        toplu.update(sozluge_cevir(json.loads(p.read_text(encoding="utf-8"))))
+        try:
+            toplu.update(sozluge_cevir(json.loads(p.read_text(encoding="utf-8"))))
+        except json.JSONDecodeError as e:
+            sys.exit("Detay JSON bozuk: {} ({})".format(p, e))
     return toplu
 
 
@@ -133,7 +148,9 @@ def main():
     cikti = json.dumps(eksik, ensure_ascii=False)
     print(cikti)
     if a.cikti:
-        Path(a.cikti).write_text(cikti, encoding="utf-8")
+        hedef = Path(a.cikti)
+        hedef.parent.mkdir(parents=True, exist_ok=True)
+        hedef.write_text(cikti, encoding="utf-8")
 
     print("TOPLAM: {} | EKSIK: {} | TAMAM: {} (JSON {} + Excel {})".format(
         toplam, len(eksik), jsondan_tamam + excelden_tamam, jsondan_tamam, excelden_tamam),

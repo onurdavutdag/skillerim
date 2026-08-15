@@ -12,6 +12,7 @@ Bu script hicbir veriyi GOMULU tutmaz ve hicbir dosya yolunu SABITLEMEZ; ikisi d
 turedigi tek seferlik script'in kusuruydu.
 """
 import argparse
+import glob
 import json
 import statistics
 import sys
@@ -62,9 +63,20 @@ def kayit_oku(yollar):
             sys.exit("{}: 'ilanlar' listesi yok.".format(p.name))
 
         for i, k in enumerate(satirlar):
+            if not isinstance(k, dict):
+                sys.exit("{} kayit #{}: sozluk degil -> {!r}".format(p.name, i, k))
             eksik = [a for a in ZORUNLU_ALANLAR if k.get(a) in (None, "")]
             if eksik:
                 sys.exit("{} kayit #{}: zorunlu alan bos -> {}".format(p.name, i, ", ".join(eksik)))
+            # Tip koruyucu: '2.950.000 TL' gibi metin fiyat asagida TL/m2 hesabinda
+            # TypeError patlatir - burada anlamli hatayla reddedilir (sozlesme §1).
+            if isinstance(k["fiyat"], bool) or not isinstance(k["fiyat"], (int, float)):
+                sys.exit("{} kayit #{}: 'fiyat' sayi degil -> {!r} (sozlesme: ayracsiz tam sayi)".format(
+                    p.name, i, k["fiyat"]))
+            for alan in ("m2_brut", "m2_net"):
+                deger = k.get(alan)
+                if deger is not None and (isinstance(deger, bool) or not isinstance(deger, (int, float))):
+                    sys.exit("{} kayit #{}: '{}' sayi degil -> {!r}".format(p.name, i, alan, deger))
             ilanlar.append(k)
 
     return metalar, ilanlar
@@ -144,6 +156,18 @@ def tekillestir(ilanlar):
         ana = dict(sirali[0])
         for digeri in sirali[1:]:
             for alan, deger in digeri.items():
+                # `deprem` bir SOZLUK; "bos mu" testi ona islemez, cunku skoru
+                # uretilememis bir kayit da {"skor": None, ...} tasir. Iki sitede
+                # birden gorunen bir ilanda biri (or. hepsiemlak) bina yasini
+                # verip skoru uretmisken digeri (sahibinden) verememis olabilir;
+                # asagidaki test olmadan hangisi daha YENI ise o kazanir ve
+                # hesaplanmis skor cope gider.
+                if alan == "deprem" and isinstance(deger, dict):
+                    eldeki = ana.get(alan)
+                    if not isinstance(eldeki, dict) or (
+                            eldeki.get("skor") is None and deger.get("skor") is not None):
+                        ana[alan] = deger
+                    continue
                 if ana.get(alan) in (None, "") and deger not in (None, ""):
                     ana[alan] = deger
         ana["_kaynaklar"] = ", ".join(sorted(s for s in kume["siteler"] if s))
@@ -163,6 +187,10 @@ def sutunlari_kur(kayitlar):
         ("Ilan Basligi", "baslik", 52),
         ("Fiyat (TL)", "fiyat", 14),
         ("m2 (Brut)", "_m2", 10),
+    ]
+    if var("m2_net"):
+        sutunlar.append(("m2 (Net)", "m2_net", 10))
+    sutunlar += [
         ("TL/m2", "_tl_m2", 12),
         ("Oda", "oda", 8),
     ]
@@ -178,6 +206,12 @@ def sutunlari_kur(kayitlar):
         sutunlar.append(("Bina Yasi Bandi", "bina_yasi_bant", 15))
     if var("toplam_kat"):
         sutunlar.append(("Toplam Kat", "toplam_kat", 11))
+    # "Kat" etiketi deprem blogundaki bilesen sutunuyla cakisir (exceloku onu
+    # deprem blogu varken atlar) - bu yuzden "Bulundugu Kat".
+    if var("kat"):
+        sutunlar.append(("Bulundugu Kat", "kat", 13))
+    if var("isitma"):
+        sutunlar.append(("Isitma", "isitma", 16))
     if deprem_var:
         sutunlar += [
             ("Deprem Risk", "_d_skor", 12),
@@ -215,7 +249,7 @@ def turetilmis_alanlar(k):
     if isinstance(d, dict):
         b = d.get("bilesenler") or {}
         k["_d_skor"] = d.get("skor")
-        k["_d_guven"] = d.get("guven")            # "(4/6)"
+        k["_d_guven"] = d.get("guven")            # "(4/6 bilesen)"
         k["_d_yonetmelik"] = b.get("yonetmelik")
         k["_d_hasar"] = b.get("ilce_hasar")
         k["_d_fay"] = b.get("fay")
@@ -255,7 +289,7 @@ def ana_sayfa(wb, kayitlar, sutunlar, sayfa_adi):
 
             if alan in ("fiyat", "_tl_m2"):
                 hucre.number_format = "#,##0"
-            elif alan in ("_m2", "bina_yasi", "toplam_kat"):
+            elif alan in ("_m2", "m2_net", "bina_yasi", "toplam_kat", "kat"):
                 hucre.number_format = "0"
             elif alan in ("_d_skor", "mesafe_km") or alan.startswith("_d_") and alan != "_d_neden":
                 if isinstance(deger, (int, float)):
@@ -285,7 +319,7 @@ def ozet_sayfa(wb, kayitlar, metalar, birlesen, olasi_tekrar):
     yaz = lambda *h: ws.append(list(h))
 
     def bolum(baslik):
-        ws.append([])
+        ws.append([""])  # append([]) openpyxl'de satir OLUSTURMAZ - basliklar kayar
         r = ws.max_row + 1
         ws.cell(r, 1, baslik).font = Font(bold=True, size=12)
 
@@ -356,7 +390,7 @@ def ozet_sayfa(wb, kayitlar, metalar, birlesen, olasi_tekrar):
             yaz(ad, "{:.1f} - {:.1f}".format(alt, min(ust, 10.0)),
                 sum(1 for s in skorlar if alt <= s < ust))
         yaz("Skor uretilemeyen", len(kayitlar) - len(skorlar))
-        ws.append([])
+        ws.append([""])
         u = ws.cell(ws.max_row + 1, 1, "UYARI: " + UYARI_METNI)
         u.font = Font(bold=True, color="C00000")
         u.alignment = Alignment(wrap_text=True, vertical="top")
@@ -373,7 +407,7 @@ def kunye_sayfa(wb, kayitlar, metalar, kirpilan):
     yaz = lambda a, b: ws.append([a, b])
 
     for m in metalar:
-        ws.append([])
+        ws.append([""])
         ws.cell(ws.max_row + 1, 1, "Kaynak: {}".format(m.get("site") or m.get("_dosya"))).font = Font(bold=True, size=12)
         for etiket, anahtar in (
             ("Kategori", "kategori"), ("Konum", "konum"), ("Arama URL", "arama_url"),
@@ -387,7 +421,7 @@ def kunye_sayfa(wb, kayitlar, metalar, kirpilan):
         if f:
             yaz("Filtre", json.dumps(f, ensure_ascii=False))
 
-    ws.append([])
+    ws.append([""])
     ws.cell(ws.max_row + 1, 1, "Birlesik tablo").font = Font(bold=True, size=12)
     fiyatlar = _sayilar(kayitlar, "fiyat")
     tlm2 = _sayilar(kayitlar, "_tl_m2")
@@ -397,6 +431,9 @@ def kunye_sayfa(wb, kayitlar, metalar, kirpilan):
     yaz("Aciklamasi kirpilan satir", kirpilan)
     yaz("Uretim zamani", datetime.now().strftime("%d.%m.%Y %H:%M") + " (yerel)")
     yaz("Not", "m2 degerleri ilan sahibinin beyanidir; brut/net ayrimi ilan detayinda kontrol edilmelidir.")
+    yaklasik = sum(1 for k in kayitlar if k.get("mesafe_yaklasik"))
+    if yaklasik:
+        yaz("Mesafe notu", "{} ilanda mesafe ilce merkezinden kus ucusu hesaplandi (yaklasik).".format(yaklasik))
     if any(isinstance(k.get("deprem"), dict) for k in kayitlar):
         yaz("UYARI", UYARI_METNI)
 
@@ -420,7 +457,19 @@ def main():
                     help="Sitelerarasi tekillestirmeyi kapatir (ham hali gorulsun diye)")
     a = ap.parse_args()
 
-    metalar, ham = kayit_oku(a.kayit)
+    # PowerShell/cmd '*' genisletmez - literal desen buraya kadar gelir. POSIX
+    # kabuklar zaten genisletir; burasi yalniz genislememis deseni yakalar.
+    yollar = []
+    for yol in a.kayit:
+        if any(c in yol for c in "*?["):
+            esleyen = sorted(glob.glob(yol))
+            if not esleyen:
+                sys.exit("Desen hicbir dosyayla eslesmedi: {}".format(yol))
+            yollar.extend(esleyen)
+        else:
+            yollar.append(yol)
+
+    metalar, ham = kayit_oku(yollar)
     if not ham:
         sys.exit("Hic ilan yok - Excel uretilmedi.")
 

@@ -34,8 +34,9 @@ https://www.emlakjet.com/satilik-daire/<konum>?sayfa=<N>
 | **Bina yaşı** | Genel olarak **YOK**; yalnız `"SIFIR BİNA"` rozeti varsa yaş = 0 | ✅ |
 | **Fiyat filtresi** | `?min_fiyat=&max_fiyat=` **sessizce yok sayılıyor** | ⛔ 15.08.2026 ölçüldü — URL'den geçmiyor, eleme yerelde yapılır |
 | Kat | karttaki `"4. Kat"` metni → sayı (`Zemin`=0, `Bodrum`=-1) | ✅ 15.08 — çevrilemezse `null` |
-| Detay sayfası seçicileri | — | ⚠️ **ÖLÇÜLMEDİ** |
-| Hız tavanı | 14.08.2026'da engel görülmedi | ⚠️ ölçülmedi — sahibinden tavanı uygulanır |
+| Detay sayfası seçicileri | `get_page_text` doğrudan yeterli — DOM seçici gerekmiyor, ayrıntı aşağıda | ✅ 15.08.2026 ölçüldü |
+| Liste hız tavanı | 14.08 ve 15.08.2026'da engel görülmedi | ✅ ≥3 sn yeterli |
+| Detay hız tavanı | 15.08.2026 11:4x-12:0x: 16/16 ilan, sabit ~9-10 sn arayla, **hiç blok görülmedi** | ✅ ölçüldü, ayrıntı Detay kipi §Hız |
 
 ### ⛔ `innerText` KULLANMA — 30 karttan 20'sinde boş döner
 
@@ -124,11 +125,153 @@ Tool çıktısı ~1.200 karakterde kesilir — veriyi `return` ile taşımaya ç
 
 **CAPTCHA çözme. Hesaba girme. Proxy/UA hilesi deneme.**
 
-## Çıktı biçimi
+## Detay kipi — ilan sayfasına girdiğinde
+
+Çağıran sana **hangi kipte** olduğunu söyler. Detay kipinde elinde bir ilan numarası listesi olur
+(`eksik.json`) ve tek işin o ilanların sayfasına girip aşağıdaki alanları okumaktır.
+
+### Neden bu sitede detay geçişi değerli
+
+Liste sayfası bu sitede **bina yaşı vermiyor** (yalnız "SIFIR BİNA" rozeti). Bina yaşı deprem risk
+skorunun en ağır bileşenidir (0-3,5) ve o olmadan çoğu emlakjet satırı 2 bileşende kalır — skor
+**hiç üretilmez** (`Yetersiz veri`). Detay sayfası bu satırları skorlanabilir hâle getiren tek yoldur.
+Envanter küçük olduğu için (Hatay'da 169 ilanın ~16'sı tipik bir fiyat aralığında) maliyeti de düşüktür.
+
+### Toplanacak alanlar
+
+`bina_yasi` · `aciklama` · `tapu_durumu` · `toplam_kat` · `kat` · `isitma`
+
+Site bina yaşını **bant** veriyorsa (`"5-10 arası"`) `bina_yasi = null` bırak, ham metni
+`bina_yasi_bant`'a yaz — banttan tek sayı **uydurma**. Skorlayıcı bandı kendi çözer.
+
+### ✅ Seçiciler ÖLÇÜLDÜ — 15.08.2026
+
+Liste kartlarının aksine detay sayfasında **`innerText` tuzağı yok** — `get_page_text` (Claude-in-Chrome
+aracı, sayfa JS'i değil) tek çağrıda tüm alanları **temiz ve ayrıştırılabilir düz metin** olarak veriyor.
+`javascript_tool`/DOM seçiciye normalde gerek **yok**; `get_page_text` sonucunu regex ile ayrıştırmak yeterli.
+
+`get_page_text` çıktısının kalıbı (satır sonlarına dikkat — ilk blok değer-sonra-etiket, ikinci blok
+etiket-sonra-değer):
+
+```
+İlan Bilgileri
+
+3+1
+
+Oda Sayısı
+
+1
+
+Banyo Sayısı
+
+1.Kat
+
+Bulunduğu Kat
+
+4
+
+Kat Sayısı
+
+130 m²
+
+Brüt
+
+120 m²
+
+Net
+
+16-20
+
+Bina Yaşı
+
+İlan Numarası
+19706742
+...
+Kategori
+Satılık Daire
+Isıtma Tipi
+Klimalı
+...
+Tapu Durumu
+Kat Mülkiyeti
+...
+<Başlık> Açıklaması
+
+<açıklamanın tam metni, tek/çok paragraf>
+
+Konum Bilgisi
+```
+
+Ayrıştırma kuralı:
+- `Bulunduğu Kat` → `"1.Kat"` gibi bir değer, hemen üstündeki satır. `.` öncesi sayı `kat` alanına
+  yazılır (`Zemin`→0, `Bodrum`→-1, çevrilemezse `null`).
+- `Kat Sayısı` → üstündeki satır tam sayı, `toplam_kat`.
+- `Bina Yaşı` → üstündeki değer. Tek sayıysa (`"12"`) `bina_yasi`'na yaz. **Bant** ise (`"16-20"`,
+  `"21 Üzeri"`, `"0"` hariç aralık biçimindeki her şey) `bina_yasi=null`, ham metin `bina_yasi_bant`'a.
+  `"0"` tek başına ise sıfır bina, `bina_yasi=0`.
+- `Isıtma Tipi` etiketinin **hemen altındaki** satır → `isitma` (ör. `"Klimalı"`, `"Kombi (Doğalgaz)"`).
+- `Tapu Durumu` etiketinin **hemen altındaki** satır → `tapu_durumu` (ör. `"Kat Mülkiyeti"`).
+- Açıklama: sayfa başlığı + `" Açıklaması"` başlığından **"Konum Bilgisi"** satırına kadar olan metin
+  (baş/son boşluk kırpılır). Bazı ilanlarda bu başlık farklı önek taşıyabilir (`"Sahibinden ..."`,
+  `"<Emlakçı adı>'dan ..."`) — sabit metinle değil, **`"Açıklaması"`** ile biten satırı arayarak bul.
+
+DOM tabanlı yedek (yalnız `get_page_text` başarısız olursa, 15.08.2026'da ölçüldü, `javascript_tool`
+ile `textContent` okunur — `outerHTML` bazı ilanlarda "[BLOCKED: Cookie/query string data]" ile kesiliyor,
+`textContent`/özellik bazlı okuma kullan):
+- İlan Bilgileri grid'i (oda/banyo/kat/m²/bina yaşı): `div.mb-5.grid.grid-cols-2.gap-4` içindeki
+  `div.flex.items-center.gap-3` çocukları; her birinin `textContent`'i **değer+etiket** yapışık gelir.
+- Alt liste (Tapu Durumu, Isıtma Tipi, İlan No, vb.): `ul.grid.grid-cols-1.gap-x-8.sm\\:grid-cols-2 > li`,
+  her `li` iki `span` içerir — ilk `span.text-sm` **etiket**, ikinci `span` **değer**.
+- Açıklama: `"Açıklaması"` metnini taşıyan `h2`'nin `nextElementSibling` `div`'i (`textContent`).
+
+### Hız — ölçüldü: 9-10 sn
+
+15.08.2026 11:4x-12:0x: **16 ilan** art arda, sondaj 8-10 sn → kalanı ~9-10 sn sabit arayla,
+**hiç blok işareti görülmedi**.
+
+| Durum | Ne yap |
+|---|---|
+| Normal | **9-10 sn** aralık, her 20 ilanda ~30 sn durakla |
+| Blok işareti geldiyse | **DUR**, topladığını yaz, aralığı **25-30 sn**'ye çıkar, her 10 ilanda ~60 sn durakla |
+| İkinci blok | Dur ve geri dön — ısrar etme |
+
+Ölçtüğün fiilî tempoyu ve blok gelip gelmediğini `notlar`'a **rakamla** yaz.
+
+### İlan sayfasına yalnız gerçek gezintiyle gir
+
+`navigate` ile üst düzey gezinti. **`fetch` yok, XHR yok, iframe yok** — üçü de ölçülmüş blok
+sebebidir (`emlaktoplayici-r-tarayici-teknigi.md` §2).
+
+### Yazma kuralı — panoya güvenme
+
+15.08.2026'da hem `clipboard.writeText` hem `document.execCommand('copy')` arka plandaki sekmede
+**`Document is not focused`** ile düştü. Bunun yerine **her ilanda tek ilanlık kompakt JSON** döndür
+(tool çıktısı ~1.200 karakterde kesilir; açıklama uzunsa `slice` ile parçala) ve o kaydı **kendin**
+`Write`/`Bash` ile çıktı dosyasındaki sözlüğe ekle. Dosya her ilandan sonra tamdır.
+
+**İndeks defteri tutma.** İkinci geçişte hangi ilanların kaldığını çağıran hesaplar
+(`emlaktoplayici_detayeksikbul.py`).
+
+## Çıktı biçimi — hangi kipte olduğuna dikkat et
+
+İki kip **iki ayrı şema** yazar. Karıştırırsan sonraki adım veriyi işleyemez.
+
+### Liste kipi
 
 Şema: `references/emlaktoplayici-r-excel-sozlesmesi.md` §1. `site` alanı **`"emlakjet"`**.
 
-Alan kuralları:
+### Detay kipi
+
+`meta`/`ilanlar` **yok**. Dosyanın kendisi **ilan numarasıyla anahtarlanmış bir sözlüktür**:
+
+```json
+{"17263748": {"tapu_durumu":"Kat Mülkiyetli","aciklama":"...","bina_yasi":12,
+              "bina_yasi_bant":null,"toplam_kat":5,"kat":2,"isitma":"Kombi (Doğalgaz)"}}
+```
+
+Dosya adı: `output/json/emlakjet detay <YYYYAAGG SSDD>.json`
+
+Alan kuralları (her iki kipte de geçerli):
 - `fiyat` **ayraçsız tam sayı**: `"2.950.000 TL"` → `2950000`
 - `ilan_no` **string**; site ilan no vermiyorsa URL'deki kimliği kullan
 - `tarih` `YYYY-MM-DD`

@@ -2,8 +2,9 @@
 """Detay sayfasindan toplanan alanlari MEVCUT bir Excel dosyasina yerinde ekler.
 
 Detay alanlari (Aciklama, Tapu Durumu, Bina Yasi, Kat) liste sayfasinda YOKTUR;
-ilan sayfasina tek tek girmeyi gerektirir ve pahalidir (ilan basina >=12-15 sn,
-bkz. references/emlaktoplayici-r-tarayici-teknigi.md §5). Bu yuzden ayri gecis, ayri script.
+ilan sayfasina tek tek girmeyi gerektirir ve pahalidir (sahibinden >=25-30 sn,
+hepsiemlak/emlakjet 8-10 sn - bkz. references/emlaktoplayici-r-tarayici-teknigi.md §5).
+Bu yuzden ayri gecis, ayri script.
 
 Girdi : mevcut .xlsx  +  detay JSON  { "<ilan no>": {"tapu_durumu": ..., "aciklama": ...} }
         (liste bicimi de kabul edilir: {"ilanlar": [{"ilan_no": ..., ...}]} -> cevrilir)
@@ -31,6 +32,9 @@ EKLENECEK = [
     ("bina_yasi", "Bina Yasi", 10, "Semt"),
     ("bina_yasi_bant", "Bina Yasi Bandi", 15, "Semt"),  # sahibinden hep bant verir
     ("toplam_kat", "Toplam Kat", 11, "Semt"),
+    # "Kat" degil "Bulundugu Kat": deprem blogundaki bilesen sutunu "Kat" adini
+    # tasir, exceloku deprem blogu varken o adi atlar (excelbas ile ayni karar).
+    ("kat", "Bulundugu Kat", 13, "Semt"),
     ("isitma", "Isitma", 16, "Semt"),
     ("aciklama", "Aciklama", 60, "son"),
 ]
@@ -101,7 +105,13 @@ def main():
     xlsx = Path(a.xlsx)
     if not xlsx.exists():
         sys.exit("Excel yok: {}".format(xlsx))
-    detay = sozluge_cevir(json.loads(Path(a.detay).read_text(encoding="utf-8")))
+    detay_yolu = Path(a.detay)
+    if not detay_yolu.exists():
+        sys.exit("Detay dosyasi yok: {}".format(detay_yolu))
+    try:
+        detay = sozluge_cevir(json.loads(detay_yolu.read_text(encoding="utf-8")))
+    except json.JSONDecodeError as e:
+        sys.exit("Detay JSON bozuk: {} ({})".format(detay_yolu, e))
 
     try:
         wb = load_workbook(xlsx)
@@ -185,7 +195,7 @@ def main():
                     kirpilan += 1
                 h = ws.cell(r, sutun, deger)
                 h.alignment = Alignment(vertical="top", wrap_text=False)
-            elif alan in ("bina_yasi", "toplam_kat"):
+            elif alan in ("bina_yasi", "toplam_kat", "kat"):
                 try:
                     h = ws.cell(r, sutun, int(deger))
                     h.number_format = "0"
@@ -204,7 +214,7 @@ def main():
     # Kunye guncelle - hangi geciste ne toplandigi kayda gecsin
     kunye = wb["Kunye"] if "Kunye" in wb.sheetnames else (wb["Künye"] if "Künye" in wb.sheetnames else None)
     if kunye is not None:
-        kunye.append([])
+        kunye.append([""])  # append([]) openpyxl'de satir olusturmaz
         kunye.append(["Detay taramasi", datetime.now().strftime("%d.%m.%Y %H:%M") + " (yerel)"])
         kunye.append(["Detayi okunan ilan", len(detay)])
         kunye.append(["Detayi alinamayan satir", eslesmeyen])

@@ -56,8 +56,12 @@ sahibinden bina yaşını **tek sayı olarak vermez**, bant verir: `"11-15 aras�
 ### 1.2 İlçe hasar yoğunluğu (0-2,5)
 
 6 Şubat 2023 depremleri sonrası **kesin hasar tespiti** sayıları. İlçenin
-`(yıkık + acil yıktırılacak + ağır)` toplamı, ilçedeki toplam bağımsız bölüme oranlanır; oran
-ilçeler arasında 0-2,5 aralığına ölçeklenir.
+`(yıkık + acil yıktırılacak + ağır)` toplamı, ilçenin **2022 nüfusuna** oranlanır
+(bin kişi başına yoğunluk); oran 15 ilçe arasında min-maks ile 0-2,5 aralığına ölçeklenir.
+
+> **Neden nüfus, neden bağımsız bölüm değil:** ilçe düzeyinde toplam bağımsız bölüm sayısı
+> kamuya açık değil (bkz. §3). Nüfus, bina stoğunun kamuya açık tek tutarlı vekilidir;
+> yoğunluk sıralamasını değiştirmediği ölçekleme min-maks olduğu için sonuç aynı banda oturur.
 
 Veri: `assets/hatay_ilce_hasar.json`. Kaynak künyesi o dosyanın `_kaynak` alanındadır.
 
@@ -140,6 +144,12 @@ ilan verisinde güvenilir biçimde yok.
 
 Eşleşme kelime köküne göre yapılır, Türkçe ekler tolere edilir. Birden çok beyan varsa **en ağırı** alınır.
 
+**Olumsuzlama beyanı geçersiz kılar:** "ağır hasar **almamıştır**", "hasar kaydı **yoktur**",
+"orta hasarlı **değildir**" beyan sayılmaz ve sert kuralı tetiklemez. Olumsuzlama yalnız
+**aynı cümlecikte** (virgül/nokta öncesi, ~25 karakter) aranır — "orta hasarlı, güçlendirme
+yapılmadı" ilanında "yapılmadı" güçlendirmeyi olumsuzlar, hasar beyanı ayakta kalır ve sert
+kural çalışır. "hasarsız" sözcüğü hasar kalıplarına yakalanmaz (`hasar(?!sız)`).
+
 > **SERT KURAL — beyan skoru ezer:** ilan "orta hasarlı" ya da "ağır hasarlı" diyorsa toplam skor
 > **en az 8'e sabitlenir**, diğer bileşenler ne derse desin.
 > Gerekçe: orta hasarlı bina yasal olarak **güçlendirilmeden oturulamaz**; ağır hasarlıda satılan şey
@@ -148,6 +158,10 @@ Eşleşme kelime köküne göre yapılır, Türkçe ekler tolere edilir. Birden 
 ## 2. Eksik veri — sahte kesinlik üretilmez
 
 - Hesaplanamayan bileşen **boş** kalır. Ortalamayla, medyanla veya "tipik değerle" doldurulmaz.
+- **Yıl/yaş karışması koruması:** `bina_yasi > 150` ise (ilana yaş yerine yapım yılı yazılmış
+  olmalı, ör. `2026`) bileşen hesaplanmaz ve `Neden`'e şüphe notu düşer — 2026 yaşındaki "bina"
+  sessizce azami risk almaz.
+- `toplam_kat ≤ 0` anlamsız veridir; kat bileşeni hesaplanmaz (alçak bina puanı verilmez).
 - Skorun yanına kaç bileşenin hesaplandığı yazılır: **`(4/6 bileşen)`**.
 - 3'ten az bileşen hesaplanabiliyorsa skor **hiç üretilmez** — `Yetersiz veri` yazılır.
 - Excel'de her bileşen **ayrı sütundur**; kullanıcı hangi bileşenin skoru sürüklediğini görebilir.

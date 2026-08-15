@@ -31,10 +31,12 @@ Kullanıcıya sor (varsayılanları belirterek, **cevap gelmeden ilerleme**):
 > 1. Hangi siteler? (varsayılan: üçü birden — sahibinden, hepsiemlak, emlakjet)
 > 2. Kategori ve konum? (ör. satılık daire / Hatay)
 > 3. Fiyat veya başka filtre var mı?
-> 4. **Açıklama + Tapu Durumu** gibi detay sayfası alanları isteniyor mu? *(İstenirse süre ilan başına
->    ~25-30 sn — 150 ilan ≈ 75-85 dk, ve blok riski gerçektir. Sebebi
->    `references/emlaktoplayici-r-tarayici-teknigi.md` §2'de.)*
-> 5. Deprem risk skoru isteniyor mu?
+> 4. **Açıklama + Tapu Durumu** gibi detay sayfası alanları isteniyor mu? Hangi sitelerde?
+>    *(sahibinden'de ilan başına ~25-30 sn ve blok riski gerçek — 150 ilan ≈ 75-85 dk.
+>    hepsiemlak ve emlakjet ölçüldü: **8-10 sn, blok görülmedi** — 150 ilan ≈ 25-30 dk.
+>    Sebebi `references/emlaktoplayici-r-tarayici-teknigi.md` §2'de.)*
+> 5. Deprem risk skoru isteniyor mu? *(Varsayılan **evet**; detay geçişi yapılmayan sitelerde bina yaşı
+>    yoksa o satırlar `Yetersiz veri` kalır — kullanıcıya baştan söylenir.)*
 > 6. Mesafe hesabı için referans nokta var mı?
 
 Kullanıcı zaten belirtmişse sorma, doğrudan geç.
@@ -73,43 +75,73 @@ ilçe + m² (±%3) + fiyat (±%2) + oda
 Eşleşenler tek satıra iner, göründüğü siteler `Kaynak` sütununda listelenir (`sahibinden, emlakjet`).
 Şüpheli eşleşme birleştirilmez, `Özet` sayfasında "olası tekrar" olarak raporlanır — sessiz kayıp olmaz.
 
-### Adım 4 — (opsiyonel) Deprem risk skoru
+### Adım 4 — (istenirse) Detay geçişi — **deprem skorundan ÖNCE**
 
-```bash
-python -B scripts/emlaktoplayici_depremskorla.py --kayit <tmp>/birlesik.json --cikti <tmp>/skorlu.json
-```
+Detay alanları (Açıklama / Tapu Durumu / toplam kat) liste sayfasında yoktur; ayrı ve pahalı bir geçiş
+ister. **Sıra pazarlık konusu değildir:** deprem skorunun iki bileşeni (`aciklama` → beyan,
+`toplam_kat` → kat) detaydan gelir. Önce skorlayıp sonra detay toplarsan skor o iki bileşeni **hiç
+görmez** — 15.08.2026 koşusunda tam olarak bu oldu, tablo hem açıklamasız hem skorsuz çıktı.
 
-Ölçek, ağırlıklar ve kaynak künyesi `references/emlaktoplayici-r-deprem-risk-olcegi.md`'dedir.
-**Skorun ne olmadığı** o dosyada ve Excel künyesinde açıkça yazılır — ön eleme aracıdır, mühendislik
-değerlendirmesi değildir.
-
-### Adım 5 — Excel üret
-
-```bash
-python -B scripts/emlaktoplayici_excelbas.py --kayit <tmp>/skorlu.json \
-  --cikti "output/xlsx/<Ad> YYYYAAGG SSDD.xlsx"
-```
-
-### Adım 5b — (opsiyonel) Detay geçişi
-
-Detay alanları (Açıklama / Tapu Durumu) liste sayfasında yoktur; ayrı ve pahalı bir geçiş ister.
-Sıra şudur — **taranacak listeyi sen hesapla, ajana hatırlama yükü bindirme**:
+**Taranacak listeyi sen hesapla, ajana hatırlama yükü bindirme:**
 
 ```bash
 # 1. Kimin detayı eksik? (ilk geçişte hepsi, blok sonrası yalnız kalanlar)
 python -B scripts/emlaktoplayici_detayeksikbul.py --xlsx "<mevcut>.xlsx" \
   [--detay "output/json/<detay>.json"] --cikti <tmp>/eksik.json
 
-# 2. Ajanı DETAY kipinde çalıştır; ona <tmp>/eksik.json yolunu ver.
-#    Ajan ilan no ile anahtarlanmış sözlük yazar, her 30 ilanda diske flush eder.
+# 2. Ajan(lar)ı DETAY kipinde çalıştır; her birine <tmp>/eksik.json yolunu ver.
+#    Farklı siteler paralel koşabilir; AYNI sitede paralellik blok sebebidir.
+#    Ajan ilan no ile anahtarlanmış sözlük yazar, her ilandan sonra diske yazar.
 
-# 3. Toplananı Excel'e işle (dosya adı değişmez, idempotenttir)
+# 3. Detayı KAYIT JSON'una kat (skorlayıcının görebilmesi için)
+python -B scripts/emlaktoplayici_detaybirlestir.py --kayit <tarama>.json \
+  --detay <tmp>/detay.json --cikti-dizin <tmp>/birlesik/
+```
+
+**Site tercihi — maliyet çok farklı:**
+
+| Site | Detay maliyeti | Ne kazandırır |
+|---|---|---|
+| hepsiemlak | **8-10 sn — ölçüldü** (80 ilan, blok yok) | açıklama + toplam kat → 3 bileşen 5'e çıkar |
+| emlakjet | **9-10 sn — ölçüldü** (16 ilan, blok yok) | **bina yaşı** — bu site onu listede vermiyor, skor ona bağlı |
+| sahibinden | **25-30 sn + blok riski gerçek** (iki denemede de blok geldi) | bina yaşı bandı + açıklama |
+
+Elde yalnız Excel varsa (kayıt JSON kaybolmuşsa) detay doğrudan tabloya da işlenebilir —
+ama o yol **skoru beslemez**:
+
+```bash
 python -B scripts/emlaktoplayici_detayekle.py --xlsx "<mevcut>.xlsx" --detay <tmp>/detay.json
 ```
 
-Blok yenirse 1-3 adımları ~30 dk sonra tekrarlanır; `detayeksikbul` kalanları kendisi bulur.
+Blok yenirse 1-3 adımları ≥2 saat sonra tekrarlanır; `detayeksikbul` kalanları kendisi bulur.
 
-### Adım 6 — (opsiyonel) Mesafe ve fark raporu
+### Adım 5 — Deprem risk skoru
+
+```bash
+python -B scripts/emlaktoplayici_depremskorla.py --kayit <tmp>/birlesik/<dosya>.json \
+  --cikti <tmp>/skorlu/<dosya>.json
+```
+
+**Varsayılan olarak çalışır** — kullanıcı istemediğini söylemedikçe atlanmaz. Skor en az 3 bileşen
+ister; bina yaşı olmayan satırlar `Yetersiz veri` kalır ve bu sayı kullanıcıya **söylenir** (sessizce
+boş sütun bırakılmaz).
+
+Ölçek, ağırlıklar ve kaynak künyesi `references/emlaktoplayici-r-deprem-risk-olcegi.md`'dedir.
+**Skorun ne olmadığı** o dosyada ve Excel künyesinde açıkça yazılır — ön eleme aracıdır, mühendislik
+değerlendirmesi değildir.
+
+### Adım 6 — Excel üret
+
+```bash
+python -B scripts/emlaktoplayici_excelbas.py --kayit <tmp>/skorlu/*.json \
+  --cikti "output/xlsx/<Ad> YYYYAAGG SSDD.xlsx"
+```
+
+Her site kendi kayıt dosyasıyla verilir — Künye sayfasında site başına ayrı blok (arama URL'i,
+blok durumu, atlanan) böyle oluşur. Tek dosyada birleştirilirse o künye kaybolur.
+`*.json` desenini script kendisi genişletir — PowerShell'de de çalışır (POSIX kabuk şart değil).
+
+### Adım 7 — (opsiyonel) Mesafe ve fark raporu
 
 ```bash
 python -B scripts/emlaktoplayici_mesafehesapla.py --kayit <tmp>/skorlu.json --referans "Antakya" --cikti <tmp>/mesafeli.json
@@ -142,14 +174,15 @@ tekilleştirmede kaç satır birleşti, dikkat çeken bulgular.
 | `references/emlaktoplayici-r-excel-sozlesmesi.md` | Kayıt JSON şeması, sütun seti, sayfa yapısı, biçim kuralları |
 | `references/emlaktoplayici-r-deprem-risk-olcegi.md` | 0-10 puanlama tablosu, ağırlıklar, kaynak künyesi, kullanılamayan kaynaklar, uyarı metni |
 | `scripts/emlaktoplayici_excelbas.py` | Kayıt JSON → xlsx (Ana + Özet + Künye) |
-| `scripts/emlaktoplayici_detayekle.py` | Detay JSON → mevcut xlsx'e Açıklama / Tapu Durumu sütunu ekler |
+| `scripts/emlaktoplayici_detaybirlestir.py` | Detay JSON → **kayıt JSON**'una katar; deprem skorunun açıklamayı ve toplam katı görmesinin tek yolu |
+| `scripts/emlaktoplayici_detayekle.py` | Detay JSON → mevcut xlsx'e Açıklama / Tapu Durumu sütunu ekler (skoru **beslemez**) |
 | `scripts/emlaktoplayici_exceloku.py` | Mevcut xlsx → kayıt JSON (excelbas'in tersi) — eski tabloyu yeni taramalarla birleştirmek için |
 | `scripts/emlaktoplayici_detayeksikbul.py` | Detayı hâlâ eksik ilan numaralarını basar — blok sonrası ikinci geçişin girdisi |
 | `scripts/emlaktoplayici_depremskorla.py` | Deprem risk skoru + 6 bileşen sütunu + `Neden` |
 | `scripts/emlaktoplayici_mesafehesapla.py` | Referans noktaya kuş uçuşu mesafe |
 | `scripts/emlaktoplayici_farkcikar.py` | İki tarama → yeni / fiyatı değişen / kalkan |
-| `scripts/emlaktoplayici_dogrula.py` | Öz-denetim (101 kontrol): adlandırma N kuralları, varlık bütünlüğü, deprem skoru sınır durumları, sentetik kayıtla uçtan uca zincir, şema koruyucuları |
+| `scripts/emlaktoplayici_dogrula.py` | Öz-denetim (137 kontrol): adlandırma N kuralları, varlık bütünlüğü, deprem skoru + beyan sınır durumları, sentetik kayıtla uçtan uca zincir (detaybirlestir dahil), şema koruyucuları, doküman-sayı eşitliği |
 | `assets/hatay_ilce_hasar.json` | Hatay 15 ilçe kesin hasar tespiti sayıları |
 | `assets/ilce_koordinat.json` | İlçe merkez koordinatları |
-| `assets/gem_diri_fay_tr.geojson` | GEM Global Active Faults, Türkiye kırpması (CC-BY) — ilk kullanımda indirilir |
+| `~/.claude/.cache/emlaktoplayici/gem_diri_fay_tr.geojson` | GEM Global Active Faults, Türkiye kırpması (CC-BY) — depoda tutulmaz, ilk kullanımda indirilip önbelleğe yazılır |
 | `assets/tdth_renk_lut.json` | TUCBS deprem tehlike haritası raster rengi → PGA çevrim tablosu |

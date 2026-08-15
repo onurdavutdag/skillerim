@@ -20,9 +20,16 @@ def yukle(yol):
     p = Path(yol)
     if not p.exists():
         sys.exit("Dosya yok: {}".format(p))
-    veri = json.loads(p.read_text(encoding="utf-8"))
+    try:
+        veri = json.loads(p.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        sys.exit("Bozuk JSON ({}): {}".format(p.name, e))
+    ilanlar = veri.get("ilanlar") if isinstance(veri, dict) else None
+    if not isinstance(ilanlar, list):
+        # Sessizce "hepsi yeni/kalkan" demek yerine yanlis semayi reddet.
+        sys.exit("{}: 'ilanlar' listesi yok - kayit JSON semasi degil.".format(p.name))
     indeks = {}
-    for k in veri.get("ilanlar") or []:
+    for k in ilanlar:
         indeks[(k.get("site"), str(k.get("ilan_no")))] = k
     return veri, indeks
 

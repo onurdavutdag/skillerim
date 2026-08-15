@@ -37,6 +37,7 @@ Dosya adı: `output/json/<site> <YYYYAAGG SSDD>.json`
       "tarih": "2026-08-10",
       "link": "https://www.sahibinden.com/ilan/1327480381/detay",
       "bina_yasi": null,
+      "bina_yasi_bant": null,
       "kat": null,
       "toplam_kat": null,
       "isitma": null,
@@ -85,28 +86,38 @@ Detay alanları listede yoktur, ilan sayfasına girmeyi gerektirir — bu yüzde
 { "1327480381": {"tapu_durumu": "Kat Mülkiyetli", "aciklama": "...", "bina_yasi": 3, "kat": 2, "toplam_kat": 5} }
 ```
 
-Anahtar `ilan_no`. Eksik ilan `Belirtilmemiş` olarak işlenir, satır silinmez.
+Anahtar `ilan_no`. Kayıt `bina_yasi_bant`, `isitma` ve `m2_net` de taşıyabilir. Eksik ilan
+`Belirtilmemiş` olarak işlenir, satır silinmez.
 
 ## 4. Excel çıktısı
 
 ### Sayfa "Ana"
 
+Başlıklar Excel'e **ASCII** basılır (`Ilan Basligi`, `Ilce`, `m2 (Brut)`) — Windows/Excel
+kodlama sürprizlerine kapı kapalı kalsın diye. `exceloku` hem ASCII hem Türkçe başlığı tanır.
+
 | # | Sütun | Kaynak alan | Genişlik | Biçim |
 |---:|---|---|---:|---|
-| 1 | İlan Başlığı | `baslik` | 52 | — |
+| 1 | Ilan Basligi | `baslik` | 52 | — |
 | 2 | Fiyat (TL) | `fiyat` | 14 | `#,##0` — **sayı** |
-| 3 | m² (Brüt) | `m2_brut` | 10 | `0` — sayı |
-| 4 | TL/m² | *hesaplanır* | 12 | `#,##0` — sayı |
+| 3 | m2 (Brut) | `m2_brut` | 10 | `0` — sayı |
+| 4 | TL/m2 | *hesaplanır* | 12 | `#,##0` — sayı |
 | 5 | Oda | `oda` | 8 | — |
-| 6 | İlçe | `ilce` | 13 | — |
+| 6 | Ilce | `ilce` | 13 | — |
 | 7 | Semt | `semt` | 14 | — |
-| 8 | İlan Tarihi | `tarih` | 13 | `DD.MM.YYYY`, ortalı |
-| 9 | İlan No | `ilan_no` | 12 | metin |
+| 8 | Ilan Tarihi | `tarih` | 13 | `DD.MM.YYYY`, ortalı |
+| 9 | Ilan No | `ilan_no` | 14 | metin |
 | 10 | Kaynak | *hesaplanır* | 22 | Birden çok siteyse virgülle |
 | 11 | Link | `link` | 46 | köprü, mavi + altı çizili |
 
-Sonradan eklenebilen sütunlar: **Tapu Durumu** (Oda'dan hemen sonra), **Deprem Risk** + 6 bileşen + `Neden`,
-**Mesafe (km)**, **Açıklama** (her zaman en sonda — uzun metin diğer sütunları itmesin).
+Veride dolu olduğunda eklenen isteğe bağlı sütunlar (boş sütun üretilmez):
+**m2 (Net)** (m2 Brut'tan sonra), **Tapu Durumu** (Oda'dan sonra), **Bina Yasi** /
+**Bina Yasi Bandi** / **Toplam Kat** / **Bulundugu Kat** / **Isitma** (Semt'ten sonra),
+**Deprem Risk** + 6 bileşen + `Neden`, **Mesafe (km)**, **Açıklama** (her zaman en sonda —
+uzun metin diğer sütunları itmesin).
+
+> Bulunduğu kat sütununun adı **"Bulundugu Kat"tır, "Kat" değil** — "Kat" başlığı deprem
+> bloğundaki kat bileşenine aittir; `exceloku` deprem bloğu varken o adı bilerek atlar.
 
 Başlık satırı: dolgu `1F3864`, beyaz kalın yazı, ortalı, yükseklik 26.
 `freeze_panes = "A2"`, `auto_filter` tüm tabloya.
@@ -122,20 +133,31 @@ Başlık satırı: dolgu `1F3864`, beyaz kalın yazı, ortalı, yükseklik 26.
 ### Sayfa "Künye"
 
 `meta` bloğunun tamamı okunur biçimde: kaynak, filtre, arama URL'i, tarama zamanı, sitedeki ilan sayısı,
-tabloya giren, atlanan, taranan sayfa, blok durumu, ortalama fiyat, ortalama TL/m², notlar.
-A sütunu kalın, genişlik 22 / 78.
+tabloya giren, atlanan, taranan sayfa, blok durumu, ortalama fiyat, ortalama TL/m², notlar; mesafe
+sütunu ilçe merkezinden hesaplandıysa "yaklaşık" notu; deprem skoru varsa zorunlu uyarı metni.
+A sütunu kalın, genişlik 26 / 96.
 
 ## 5. Tekilleştirme
 
-Aynı daire birden çok sitede ilan edilmiş olabilir. Eşleşme anahtarı **hepsi birden**:
+Aynı daire birden çok sitede ilan edilmiş olabilir. Eşleşme anahtarı **hepsi birden** ve
+**yalnız farklı siteler arasında** (aynı sitedeki iki ilan birleştirilmez — site zaten
+ilan numarasıyla tekilleştirir):
 
 ```
-ilce aynı  AND  |m² farkı| ≤ %3  AND  |fiyat farkı| ≤ %2  AND  oda aynı
+site farklı  AND  ilce aynı  AND  |m² farkı| ≤ %3  AND  |fiyat farkı| ≤ %2  AND  oda aynı
 ```
 
-- Eşleşenler tek satıra iner; `Kaynak` sütununda siteler listelenir, `link` en çok alan taşıyan kayıttan alınır
-- Alanlar birleştirilirken **dolu olan kazanır**; ikisi de doluysa daha yeni `tarih` kazanır
-- Anahtarın üçü tutup biri tutmuyorsa **birleştirilmez**, `Özet`'e "olası tekrar" olarak yazılır
+- Eşleşenler tek satıra iner; `Kaynak` sütununda siteler listelenir. Birleşik satır **en yeni
+  tarihli** kayıttan başlar (`link` de ondan gelir); eksik alanları diğer kayıtlardan tamamlanır.
+- Alanlar birleştirilirken **dolu olan kazanır**; ikisi de doluysa daha yeni `tarih` kazanır.
+  **İstisna — `deprem` sözlüğü:** skoru üretilmiş kayıt, daha yeni tarihli ama skorsuz kayda
+  karşı kazanır (aksi hâlde hesaplanmış skor çöpe gider — 15.08.2026'da oldu, düzeltildi).
+- **"Olası tekrar":** kimlik alanları (ilçe + oda + m²) tutup **yalnız fiyat** tutmuyorsa ve
+  siteler farklıysa çift **birleştirilmez**, `Özet`'e "olası tekrar" olarak yazılır — "aynı
+  daire, iki sitede farklı fiyat" adayı budur. Genel "3/4 tutuyor" kuralı bilerek kullanılmaz:
+  dar fiyat aralıklı aramada oda/ilçe/fiyat kendiliğinden tutar ve bayrak yüzlerce kez yanıp
+  değersizleşir (15.08.2026 koşusunda çift bazında ölçüldü: yalnız-fiyat-farklı 9'a karşı
+  diğer kombinasyonlar 347).
 
 Gerekçe: sessiz birleştirme veri kaybıdır; kullanıcı iki ayrı ilanı tek sanabilir. Şüphe raporlanır, silinmez.
 
